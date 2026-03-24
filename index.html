@@ -328,6 +328,17 @@
       <button class="danger" onclick="stopBot()">STOP BOT</button>
       <button onclick="changeChannel()" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);">Change Channel</button>
     </div>
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-label">Test — Send a Message to Chat</div>
+      <div class="input-row">
+        <div class="input-wrap">
+          <input type="text" id="test-msg-input" placeholder="Type any message..." autocomplete="off" spellcheck="false">
+        </div>
+        <button onclick="sendTestMessage()" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);">SEND</button>
+      </div>
+      <p class="hint" style="margin-top:8px;">Use this to verify the bot can post messages. If nothing appears in chat, the token needs to be regenerated.</p>
+    </div>
   </div>
 
 </div>
@@ -452,7 +463,7 @@ function countStages(node) {
 //  TWITCH IRC OVER WEBSOCKET
 // ═══════════════════════════════════════════════════════════════
 const SPAWN_BOT = 'pokemoncommunitygame';
-const SPAWN_RE  = /^A wild (.+?)\s*[\p{Emoji}\s]*appears[\s\p{Emoji}]*Catch it using !pokecatch/iu;
+const SPAWN_RE  = /A wild ([\w .':'’♀♂-]+?) appears\b/iu;
 
 let ws = null;
 let channel = '';
@@ -502,7 +513,10 @@ function handleLine(line) {
   const m = line.match(/:([^!]+)![^ ]+ PRIVMSG #[^ ]+ :(.+)/);
   if (!m) return;
   const nick = m[1].toLowerCase();
-  const msg  = m[2].trim();
+  // Strip IRC /me action wrapper: \x01ACTION ...\x01
+  let msg = m[2].trim();
+  if (msg.startsWith('\x01ACTION ')) msg = msg.slice(8).replace(/\x01$/, '').trim();
+  else if (msg.startsWith('\u0001ACTION ')) msg = msg.slice(8).replace(/\u0001$/, '').trim();
 
   // DEBUG: log every single chat message so we can see exactly what's arriving
   log(`[MSG] ${nick}: ${msg}`, 'info');
@@ -642,6 +656,19 @@ function changeChannel() {
   document.getElementById('setup-screen').style.display = 'block';
 }
 
+function sendTestMessage() {
+  const input = document.getElementById('test-msg-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  if (!ws || ws.readyState !== 1) {
+    log('Cannot send — bot is not connected.', 'error');
+    return;
+  }
+  sendChat(msg);
+  log(`Test message sent: "${msg}"`, 'sent');
+  input.value = '';
+}
+
 // ═══════════════════════════════════════════════════════════════
 //  INIT — restore saved channel
 // ═══════════════════════════════════════════════════════════════
@@ -653,6 +680,11 @@ window.addEventListener('load', () => {
   // Allow Enter key to start
   document.getElementById('channel-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') startBot();
+  });
+  // Enter key on test message input
+  const testInput = document.getElementById('test-msg-input');
+  if (testInput) testInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendTestMessage();
   });
 });
 </script>
