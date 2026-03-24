@@ -503,9 +503,24 @@ function handleLine(line) {
   if (!m) return;
   const nick = m[1].toLowerCase();
   const msg  = m[2].trim();
-  if (nick !== SPAWN_BOT) return;
+
+  // DEBUG: log every single chat message so we can see exactly what's arriving
+  log(`[MSG] ${nick}: ${msg}`, 'info');
+
+  if (nick !== SPAWN_BOT) {
+    return;
+  }
+
+  // PCG message received — log it prominently
+  log(`[PCG DETECTED] "${msg}"`, 'warn');
+
   const sm = msg.match(SPAWN_RE);
-  if (!sm) return;
+  if (!sm) {
+    // Log raw character codes so we can see invisible/special chars
+    const codes = [...msg].slice(0,60).map(c => c.codePointAt(0).toString(16)).join(' ');
+    log(`[NO MATCH] Raw hex: ${codes}`, 'error');
+    return;
+  }
   const pokemon = sm[1].trim();
   log(`Spawn detected: ${pokemon}`, 'spawn');
   handleSpawn(pokemon);
