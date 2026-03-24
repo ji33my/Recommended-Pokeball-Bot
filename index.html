@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PokéBall Bot</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #13131a;
+    --bg3: #1c1c26;
+    --border: #2a2a3a;
+    --accent: #7c3aed;
+    --accent2: #a855f7;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --pixel: 'Press Start 2P', monospace;
+    --mono: 'DM Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .container { width: 100%; max-width: 560px; }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .header h1 {
+    font-family: var(--pixel);
+    font-size: 13px;
+    color: var(--accent2);
+    letter-spacing: 1px;
+    line-height: 1.8;
+    text-shadow: 0 0 20px rgba(168,85,247,0.4);
+  }
+  .header p {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 10px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Pokéball spinner icon */
+  .ball-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 16px;
+    position: relative;
+  }
+  .ball-icon svg { width: 100%; height: 100%; }
+  .ball-icon.spinning svg { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Card */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+
+  .card-label {
+    font-family: var(--pixel);
+    font-size: 7px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* Setup screen */
+  #setup-screen { display: block; }
+  #bot-screen   { display: none; }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .input-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0 14px;
+    transition: border-color 0.2s;
+  }
+  .input-wrap:focus-within { border-color: var(--accent2); }
+  .input-wrap span {
+    color: var(--muted);
+    font-size: 13px;
+    user-select: none;
+    margin-right: 4px;
+  }
+  .input-wrap input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    padding: 13px 0;
+  }
+  .input-wrap input::placeholder { color: var(--muted); }
+
+  button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 13px 22px;
+    font-family: var(--pixel);
+    font-size: 7px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+  button:hover  { background: var(--accent2); }
+  button:active { transform: scale(0.97); }
+  button.danger { background: #7f1d1d; }
+  button.danger:hover { background: var(--red); }
+
+  .hint {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 10px;
+    line-height: 1.7;
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 16px;
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  .dot.green  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot.amber  { background: var(--amber); }
+  .dot.red    { background: var(--red); }
+  .status-text { font-size: 11px; color: var(--text); flex: 1; }
+  .channel-badge {
+    font-family: var(--pixel);
+    font-size: 7px;
+    color: var(--accent2);
+    background: rgba(168,85,247,0.12);
+    border: 1px solid rgba(168,85,247,0.25);
+    border-radius: 4px;
+    padding: 4px 8px;
+  }
+
+  /* Log */
+  .log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .log-clear {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    border-radius: 4px;
+  }
+  .log-clear:hover { background: var(--bg3); color: var(--text); }
+
+  #log {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    height: 240px;
+    overflow-y: auto;
+    font-size: 10px;
+    line-height: 1.9;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  #log::-webkit-scrollbar { width: 4px; }
+  #log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .log-line { display: flex; gap: 8px; }
+  .log-time { color: var(--muted); flex-shrink: 0; }
+  .log-line.info    .log-msg { color: #94a3b8; }
+  .log-line.success .log-msg { color: var(--green); }
+  .log-line.spawn   .log-msg { color: var(--accent2); font-weight: 500; }
+  .log-line.warn    .log-msg { color: var(--amber); }
+  .log-line.error   .log-msg { color: var(--red); }
+  .log-line.sent    .log-msg { color: var(--blue); }
+
+  /* Spawn notification */
+  #spawn-toast {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--bg2);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 14px 20px;
+    font-size: 11px;
+    max-width: 520px;
+    width: calc(100% - 48px);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 100;
+    box-shadow: 0 0 30px rgba(124,58,237,0.2);
+  }
+  #spawn-toast.show { transform: translateX(-50%) translateY(0); }
+  #spawn-toast .toast-title {
+    font-family: var(--pixel);
+    font-size: 7px;
+    color: var(--accent2);
+    margin-bottom: 6px;
+    letter-spacing: 1px;
+  }
+  #spawn-toast .toast-msg { color: var(--text); line-height: 1.6; word-break: break-word; }
+
+  /* Stop button row */
+  .bot-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .bot-controls button { flex: 1; }
+
+  /* Error callout */
+  .error-callout {
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 10px;
+    color: #fca5a5;
+    line-height: 1.7;
+    margin-top: 12px;
+    display: none;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="ball-icon" id="ball-icon">
+      <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="24" cy="24" r="22" fill="#1c1c26" stroke="#7c3aed" stroke-width="2"/>
+        <path d="M2 24 Q24 24 46 24" stroke="#7c3aed" stroke-width="2"/>
+        <path d="M2 24 A22 22 0 0 1 46 24" fill="#7c3aed" opacity="0.15"/>
+        <circle cx="24" cy="24" r="5" fill="#1c1c26" stroke="#a855f7" stroke-width="2"/>
+        <circle cx="24" cy="24" r="2.5" fill="#a855f7"/>
+      </svg>
+    </div>
+    <h1>POKÉBALL BOT</h1>
+    <p>Auto-recommends Pokéballs when a Pokémon spawns in chat</p>
+  </div>
+
+  <!-- SETUP SCREEN -->
+  <div id="setup-screen">
+    <div class="card">
+      <div class="card-label">Your Twitch Channel</div>
+      <div class="input-row">
+        <div class="input-wrap">
+          <span>#</span>
+          <input type="text" id="channel-input" placeholder="channelname" autocomplete="off" spellcheck="false">
+        </div>
+        <button onclick="startBot()">START</button>
+      </div>
+      <p class="hint">Your channel name is saved automatically — you won't need to enter it again.</p>
+      <div class="error-callout" id="error-callout"></div>
+    </div>
+  </div>
+
+  <!-- BOT RUNNING SCREEN -->
+  <div id="bot-screen">
+    <div class="status-bar">
+      <div class="dot" id="status-dot"></div>
+      <div class="status-text" id="status-text">Connecting…</div>
+      <div class="channel-badge" id="channel-badge"></div>
+    </div>
+
+    <div class="card">
+      <div class="log-header">
+        <div class="card-label" style="margin:0">Activity Log</div>
+        <button class="log-clear" onclick="clearLog()">Clear</button>
+      </div>
+      <div id="log"></div>
+    </div>
+
+    <div class="bot-controls">
+      <button class="danger" onclick="stopBot()">STOP BOT</button>
+      <button onclick="changeChannel()" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);">Change Channel</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Spawn toast -->
+<div id="spawn-toast">
+  <div class="toast-title">POKÉMON SPAWNED</div>
+  <div class="toast-msg" id="toast-msg"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  CONFIGURATION — Update BOT_NICK and BOT_TOKEN before deploying
+// ═══════════════════════════════════════════════════════════════
+const BOT_NICK  = 'RecommendedPokeball';
+const BOT_TOKEN = 'oauth:YOUR_NEW_TOKEN_HERE'; // ← paste your regenerated token after resetting it
+
+// ═══════════════════════════════════════════════════════════════
+//  BALL RECOMMENDATION LOGIC
+// ═══════════════════════════════════════════════════════════════
+const HEAVY_KG   = 200;
+const FEATHER_KG = 10;
+const MIN_SPEED  = 100;
+const MIN_HP     = 100;
+
+function recommendBalls(info) {
+  const recs = [];
+  const types = info.types.map(t => t.toLowerCase());
+  const w = info.weight_kg, hp = info.base_hp, spd = info.base_speed;
+
+  recs.push({ name: 'Ultra Ball', reason: 'reliable all-around' });
+
+  if (types.includes('water') || types.includes('bug')) {
+    const m = types.filter(t => ['water','bug'].includes(t)).map(capitalize).join(' & ');
+    recs.push({ name: 'Net Ball', reason: `70% — ${m} type` });
+  }
+  if (types.includes('ghost'))
+    recs.push({ name: 'Phantom Ball', reason: '80% — Ghost type' });
+  if (types.includes('dark'))
+    recs.push({ name: 'Night Ball', reason: '80% — Dark type' });
+  if (types.includes('ice'))
+    recs.push({ name: 'Frozen Ball', reason: '80% — Ice type' });
+  if (types.includes('poison') || types.includes('psychic')) {
+    const m = types.filter(t => ['poison','psychic'].includes(t)).map(capitalize).join(' & ');
+    recs.push({ name: 'Cipher Ball', reason: `70% — ${m} type` });
+  }
+  if (types.includes('electric') || types.includes('steel')) {
+    const m = types.filter(t => ['electric','steel'].includes(t)).map(capitalize).join(' & ');
+    recs.push({ name: 'Magnet Ball', reason: `70% — ${m} type` });
+  }
+  if (types.includes('normal'))
+    recs.push({ name: 'Basic Ball', reason: '80% — Normal type' });
+  if (types.includes('fairy') || types.includes('dragon')) {
+    const m = types.filter(t => ['fairy','dragon'].includes(t)).map(capitalize).join(' & ');
+    recs.push({ name: 'Fantasy Ball', reason: `80% — ${m} type` });
+  }
+  if (types.includes('ground'))
+    recs.push({ name: 'Geo Ball', reason: '80% — Ground type' });
+  if (types.includes('fighting') || types.includes('flying')) {
+    const m = types.filter(t => ['fighting','flying'].includes(t)).map(capitalize).join(' & ');
+    recs.push({ name: 'Mach Ball', reason: `80% — ${m} type` });
+  }
+  if (types.includes('fire') || types.includes('grass')) {
+    const m = types.filter(t => ['fire','grass'].includes(t)).map(capitalize).join(' & ');
+    recs.push({ name: 'Sun Ball', reason: `80% — ${m} type` });
+  }
+  if (spd >= MIN_SPEED) recs.push({ name: 'Fast Ball',    reason: `80% — ${spd} base Speed` });
+  if (hp  >= MIN_HP)    recs.push({ name: 'Heal Ball',    reason: `80% — ${hp} base HP` });
+  if (w   >= HEAVY_KG)  recs.push({ name: 'Heavy Ball',   reason: `${Math.round(w)}kg — scales 20–80%` });
+  else if (w <= FEATHER_KG) recs.push({ name: 'Feather Ball', reason: `${w.toFixed(1)}kg — scales 20–80%` });
+  if (info.evolution_stages >= 3)
+    recs.push({ name: 'Nest Ball', reason: '90% — 3-stage evolution' });
+
+  recs.push({ name: 'Repeat Ball', reason: '75% — if already in your Pokédex' });
+  return recs;
+}
+
+function formatMessage(pokemon, recs) {
+  return 'Recommended Pokéballs for ' + pokemon + ': ' +
+    recs.map(r => `${r.name} (${r.reason})`).join(' | ');
+}
+
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ═══════════════════════════════════════════════════════════════
+//  POKEAPI
+// ═══════════════════════════════════════════════════════════════
+const pokeCache = {};
+
+async function getPokemonInfo(name) {
+  const key = name.toLowerCase().replace(/ /g, '-');
+  if (pokeCache[key]) return pokeCache[key];
+  try {
+    const r = await fetch(`https://pokeapi.co/api/v2/pokemon/${key}/`);
+    if (!r.ok) throw new Error('not found');
+    const d = await r.json();
+    const types = d.types.map(t => t.type.name);
+    const stats = {};
+    d.stats.forEach(s => { stats[s.stat.name] = s.base_stat; });
+    const weight_kg = d.weight / 10;
+    const evo = await getEvolutionStages(d.species.url);
+    const info = { types, weight_kg, base_hp: stats['hp']||0, base_speed: stats['speed']||0, evolution_stages: evo };
+    pokeCache[key] = info;
+    return info;
+  } catch(e) { return null; }
+}
+
+async function getEvolutionStages(speciesUrl) {
+  try {
+    const s = await fetch(speciesUrl).then(r=>r.json());
+    const c = await fetch(s.evolution_chain.url).then(r=>r.json());
+    return countStages(c.chain);
+  } catch(e) { return 1; }
+}
+
+function countStages(node) {
+  if (!node.evolves_to || !node.evolves_to.length) return 1;
+  return 1 + Math.max(...node.evolves_to.map(countStages));
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TWITCH IRC OVER WEBSOCKET
+// ═══════════════════════════════════════════════════════════════
+const SPAWN_BOT = 'pokemoncommunitygame';
+const SPAWN_RE  = /^A wild (.+?) appears Catch it using !pokecatch/i;
+
+let ws = null;
+let channel = '';
+let stopping = false;
+let reconnectTimer = null;
+let pingTimer = null;
+
+function connect() {
+  if (ws) { ws.onclose = null; ws.close(); }
+  clearTimers();
+  setStatus('Connecting…', 'amber');
+  log('Connecting to Twitch…', 'info');
+
+  ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+
+  ws.onopen = () => {
+    ws.send(`PASS ${BOT_TOKEN}`);
+    ws.send(`NICK ${BOT_NICK}`);
+    ws.send(`JOIN #${channel}`);
+    pingTimer = setInterval(() => ws && ws.readyState===1 && ws.send('PING :tmi.twitch.tv'), 4*60*1000);
+  };
+
+  ws.onmessage = (e) => {
+    e.data.split('\r\n').forEach(handleLine);
+  };
+
+  ws.onerror = () => log('WebSocket error', 'error');
+
+  ws.onclose = () => {
+    clearTimers();
+    if (stopping) return;
+    setStatus('Disconnected — reconnecting in 10s…', 'amber');
+    log('Connection lost. Reconnecting in 10s…', 'warn');
+    reconnectTimer = setTimeout(connect, 10000);
+  };
+}
+
+function handleLine(line) {
+  if (!line) return;
+  if (line.startsWith('PING')) { ws.send('PONG :tmi.twitch.tv'); return; }
+  if (line.includes('004') || line.includes('366') || line.includes('JOIN')) {
+    setStatus(`Watching #${channel}`, 'green');
+    log(`Connected! Watching #${channel} for spawns.`, 'success');
+    spinBall(false);
+    return;
+  }
+  const m = line.match(/:([^!]+)![^ ]+ PRIVMSG #[^ ]+ :(.+)/);
+  if (!m) return;
+  const nick = m[1].toLowerCase();
+  const msg  = m[2].trim();
+  if (nick !== SPAWN_BOT) return;
+  const sm = msg.match(SPAWN_RE);
+  if (!sm) return;
+  const pokemon = sm[1].trim();
+  log(`Spawn detected: ${pokemon}`, 'spawn');
+  handleSpawn(pokemon);
+}
+
+async function handleSpawn(pokemon) {
+  spinBall(true);
+  log(`Looking up ${pokemon}…`, 'info');
+  const info = await getPokemonInfo(pokemon);
+  let chatMsg;
+  if (!info) {
+    chatMsg = `Recommended Pokéballs for ${pokemon}: Ultra Ball`;
+    log(`No data for ${pokemon}, falling back to Ultra Ball.`, 'warn');
+  } else {
+    const recs = recommendBalls(info);
+    chatMsg = formatMessage(pokemon, recs);
+  }
+  sendChat(chatMsg);
+  showToast(chatMsg);
+  log(`Sent → ${chatMsg}`, 'sent');
+  spinBall(false);
+}
+
+function sendChat(msg) {
+  if (ws && ws.readyState === 1) {
+    ws.send(`PRIVMSG #${channel} :${msg}`);
+  }
+}
+
+function clearTimers() {
+  if (pingTimer)     { clearInterval(pingTimer);   pingTimer = null; }
+  if (reconnectTimer){ clearTimeout(reconnectTimer); reconnectTimer = null; }
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════════════════════════════
+function setStatus(text, color) {
+  document.getElementById('status-text').textContent = text;
+  const dot = document.getElementById('status-dot');
+  dot.className = 'dot ' + (color || '');
+}
+
+function spinBall(on) {
+  document.getElementById('ball-icon').classList.toggle('spinning', on);
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('spawn-toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 8000);
+}
+
+function log(msg, level='info') {
+  const el = document.getElementById('log');
+  const now = new Date();
+  const ts  = now.toTimeString().slice(0,8);
+  const line = document.createElement('div');
+  line.className = `log-line ${level}`;
+  line.innerHTML = `<span class="log-time">${ts}</span><span class="log-msg">${escHtml(msg)}</span>`;
+  el.appendChild(line);
+  // Trim old lines
+  while (el.children.length > 200) el.removeChild(el.firstChild);
+  el.scrollTop = el.scrollHeight;
+}
+
+function clearLog() {
+  document.getElementById('log').innerHTML = '';
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-callout');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function hideError() {
+  document.getElementById('error-callout').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  FLOW CONTROL
+// ═══════════════════════════════════════════════════════════════
+function startBot() {
+  const input = document.getElementById('channel-input').value.trim().replace(/^#/, '').toLowerCase();
+  if (!input) { showError('Please enter your channel name.'); return; }
+  hideError();
+  channel = input;
+  localStorage.setItem('pokebot_channel', channel);
+
+  document.getElementById('setup-screen').style.display = 'none';
+  document.getElementById('bot-screen').style.display   = 'block';
+  document.getElementById('channel-badge').textContent  = '#' + channel;
+
+  stopping = false;
+  spinBall(true);
+  connect();
+}
+
+function stopBot() {
+  stopping = true;
+  clearTimers();
+  if (ws) { ws.onclose = null; ws.close(); ws = null; }
+  setStatus('Stopped.', '');
+  log('Bot stopped.', 'warn');
+  spinBall(false);
+}
+
+function changeChannel() {
+  stopBot();
+  document.getElementById('bot-screen').style.display   = 'none';
+  document.getElementById('setup-screen').style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  INIT — restore saved channel
+// ═══════════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  const saved = localStorage.getItem('pokebot_channel');
+  if (saved) {
+    document.getElementById('channel-input').value = saved;
+  }
+  // Allow Enter key to start
+  document.getElementById('channel-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') startBot();
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PokéBall Bot — Setup Instructions</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f; --bg2: #13131a; --bg3: #1c1c26;
+    --border: #2a2a3a; --accent: #7c3aed; --accent2: #a855f7;
+    --green: #22c55e; --amber: #f59e0b; --text: #e2e8f0; --muted: #64748b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace; padding: 40px 24px; }
+  .wrap { max-width: 620px; margin: 0 auto; }
+  h1 { font-family: 'Press Start 2P', monospace; font-size: 11px; color: var(--accent2); letter-spacing: 1px; margin-bottom: 8px; }
+  .sub { font-size: 12px; color: var(--muted); margin-bottom: 40px; line-height: 1.7; }
+  .step { display: flex; gap: 20px; margin-bottom: 28px; }
+  .step-num {
+    font-family: 'Press Start 2P', monospace; font-size: 9px;
+    color: var(--accent2); background: rgba(168,85,247,0.1);
+    border: 1px solid rgba(168,85,247,0.25); border-radius: 8px;
+    width: 36px; height: 36px; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0; margin-top: 2px;
+  }
+  .step-body h2 { font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--text); }
+  .step-body p  { font-size: 11px; color: var(--muted); line-height: 1.9; }
+  .step-body code {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 4px; padding: 2px 7px; font-size: 11px; color: var(--accent2);
+  }
+  .tip {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-left: 3px solid var(--amber); border-radius: 8px;
+    padding: 14px 16px; font-size: 11px; color: var(--muted); line-height: 1.9;
+    margin-top: 32px;
+  }
+  .tip strong { color: var(--amber); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>POKÉBALL BOT SETUP</h1>
+  <p class="sub">Add the bot to OBS in under 2 minutes. You only do this once.</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h2>Open OBS</h2>
+      <p>Open OBS Studio. You can do this setup while not streaming — it works anytime.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h2>Add a Browser Source</h2>
+      <p>In your Sources panel, click the <code>+</code> button and choose <code>Browser</code>.<br>
+      Name it something like <code>PokéBall Bot</code> and click OK.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h2>Paste the URL</h2>
+      <p>In the URL field, paste this address:<br><br>
+      <code>https://YOUR-GITHUB-USERNAME.github.io/YOUR-REPO-NAME/</code><br><br>
+      Set Width to <code>560</code> and Height to <code>640</code>. Click OK.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h2>Enter your channel name</h2>
+      <p>The bot page will load inside OBS. Type your Twitch channel name (without the #) and click <code>START</code>.<br><br>
+      Your channel name is saved automatically — you'll never need to type it again.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-body">
+      <h2>You're done!</h2>
+      <p>The bot is now running. Every time OBS opens, the bot starts automatically.<br>
+      You don't need to click anything — it remembers your channel.<br><br>
+      You can minimize or hide the source — it still works in the background.</p>
+    </div>
+  </div>
+
+  <div class="tip">
+    <strong>Tip:</strong> If the bot ever stops responding, right-click the Browser Source in OBS and choose <code>Refresh</code>. It will reconnect automatically.
+  </div>
+</div>
+</body>
+</html>
