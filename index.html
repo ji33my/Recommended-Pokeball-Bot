@@ -359,8 +359,8 @@ const BOT_TOKEN = 'oauth:fbi0y1a0u14hzp4g11jmw30uik77ns'; // ← paste your rege
 // ═══════════════════════════════════════════════════════════════
 //  BALL RECOMMENDATION LOGIC
 // ═══════════════════════════════════════════════════════════════
-const HEAVY_KG   = 200;
-const FEATHER_KG = 10;
+const HEAVY_KG   = 300;
+const FEATHER_KG = 100;
 const MIN_SPEED  = 100;
 const MIN_HP     = 100;
 
@@ -373,42 +373,42 @@ function recommendBalls(info) {
 
   if (types.includes('water') || types.includes('bug')) {
     const m = types.filter(t => ['water','bug'].includes(t)).map(capitalize).join(' & ');
-    recs.push({ name: 'Net Ball', reason: `70% — ${m} type` });
+    recs.push({ name: 'Net Ball', reason: '70%' });
   }
   if (types.includes('ghost'))
-    recs.push({ name: 'Phantom Ball', reason: '80% — Ghost type' });
+    recs.push({ name: 'Phantom Ball', reason: '80%' });
   if (types.includes('dark'))
-    recs.push({ name: 'Night Ball', reason: '80% — Dark type' });
+    recs.push({ name: 'Night Ball', reason: '80%' });
   if (types.includes('ice'))
-    recs.push({ name: 'Frozen Ball', reason: '80% — Ice type' });
+    recs.push({ name: 'Frozen Ball', reason: '80%' });
   if (types.includes('poison') || types.includes('psychic')) {
     const m = types.filter(t => ['poison','psychic'].includes(t)).map(capitalize).join(' & ');
-    recs.push({ name: 'Cipher Ball', reason: `70% — ${m} type` });
+    recs.push({ name: 'Cipher Ball', reason: '70%' });
   }
   if (types.includes('electric') || types.includes('steel')) {
     const m = types.filter(t => ['electric','steel'].includes(t)).map(capitalize).join(' & ');
-    recs.push({ name: 'Magnet Ball', reason: `70% — ${m} type` });
+    recs.push({ name: 'Magnet Ball', reason: '70%' });
   }
   if (types.includes('normal'))
-    recs.push({ name: 'Basic Ball', reason: '80% — Normal type' });
+    recs.push({ name: 'Basic Ball', reason: '80%' });
   if (types.includes('fairy') || types.includes('dragon')) {
     const m = types.filter(t => ['fairy','dragon'].includes(t)).map(capitalize).join(' & ');
-    recs.push({ name: 'Fantasy Ball', reason: `80% — ${m} type` });
+    recs.push({ name: 'Fantasy Ball', reason: '80%' });
   }
   if (types.includes('ground'))
-    recs.push({ name: 'Geo Ball', reason: '80% — Ground type' });
+    recs.push({ name: 'Geo Ball', reason: '80%' });
   if (types.includes('fighting') || types.includes('flying')) {
     const m = types.filter(t => ['fighting','flying'].includes(t)).map(capitalize).join(' & ');
-    recs.push({ name: 'Mach Ball', reason: `80% — ${m} type` });
+    recs.push({ name: 'Mach Ball', reason: '80%' });
   }
   if (types.includes('fire') || types.includes('grass')) {
     const m = types.filter(t => ['fire','grass'].includes(t)).map(capitalize).join(' & ');
-    recs.push({ name: 'Sun Ball', reason: `80% — ${m} type` });
+    recs.push({ name: 'Sun Ball', reason: '80%' });
   }
   if (spd >= MIN_SPEED) recs.push({ name: 'Fast Ball',    reason: `80% — ${spd} base Speed` });
   if (hp  >= MIN_HP)    recs.push({ name: 'Heal Ball',    reason: `80% — ${hp} base HP` });
-  if (w   >= HEAVY_KG)  recs.push({ name: 'Heavy Ball',   reason: `${Math.round(w)}kg — scales 20–80%` });
-  else if (w <= FEATHER_KG) recs.push({ name: 'Feather Ball', reason: `${w.toFixed(1)}kg — scales 20–80%` });
+  if (w   >= HEAVY_KG)  recs.push({ name: 'Heavy Ball',   reason: 'scales up to 80% on heavy Pokémon' });
+  else if (w <= FEATHER_KG) recs.push({ name: 'Feather Ball', reason: 'scales up to 80% on light Pokémon' });
   if (info.evolution_stages >= 3)
     recs.push({ name: 'Nest Ball', reason: '90% — 3-stage evolution' });
 
@@ -416,15 +416,20 @@ function recommendBalls(info) {
   return recs;
 }
 
-function formatMessage(pokemon, recs) {
-  return 'Recommended Pokéballs for ' + pokemon + ': ' +
-    recs.map(r => `${r.name} (${r.reason})`).join(' | ');
+function formatMessage(pokemon, info, recs) {
+  const tierMap = { 0: 'Tier C', 1: 'Tier B', 2: 'Tier A', 3: 'Tier S' };
+  const tier    = info.tier !== undefined ? tierMap[info.tier] ?? '' : '';
+  const types   = info.types.map(capitalize).join('/');
+  const prefix  = [tier, types].filter(Boolean).join(' | ');
+  const balls   = recs.map(r => `${r.name} (${r.reason})`).join(' | ');
+  return `[${prefix}] ${pokemon} — Recommended Pokéballs: ${balls}`;
 }
 
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 // ═══════════════════════════════════════════════════════════════
-//  POKEAPI
+//  NERDOTRON PCG API — single call returns tier, types, weight, BST
+//  Falls back to PokeAPI for evolution stages if needed
 // ═══════════════════════════════════════════════════════════════
 const pokeCache = {};
 
@@ -432,15 +437,63 @@ async function getPokemonInfo(name) {
   const key = name.toLowerCase().replace(/ /g, '-');
   if (pokeCache[key]) return pokeCache[key];
   try {
+    // Primary: Nerdotron PCG API (has tier, types, weight, BST)
+    const r = await fetch(`https://api.nerdotron.app/pcg/${encodeURIComponent(key)}`);
+    if (!r.ok) throw new Error('nerdotron not found');
+    const d = await r.json();
+
+    // Nerdotron returns types as comma-separated string e.g. "water, dark"
+    const types = (d.types || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+    const weight_kg = parseFloat(d.weight) || 0;
+    // tierInt: C=0, B=1, A=2, S=3
+    const tier = d.tierInt !== undefined ? parseInt(d.tierInt) : undefined;
+    const bst  = parseInt(d.bst) || 0;
+
+    // Nerdotron doesn't expose HP/Speed/evo stages — get those from PokeAPI
+    const extra = await getPokeAPIStats(key);
+
+    const info = {
+      types,
+      weight_kg,
+      tier,
+      bst,
+      base_hp:          extra.base_hp,
+      base_speed:       extra.base_speed,
+      evolution_stages: extra.evolution_stages,
+    };
+    pokeCache[key] = info;
+    return info;
+  } catch(e) {
+    // Full fallback to PokeAPI only (no tier)
+    log(`Nerdotron failed for ${name}, falling back to PokeAPI`, 'warn');
+    return await getPokeAPIFallback(key);
+  }
+}
+
+async function getPokeAPIStats(key) {
+  try {
     const r = await fetch(`https://pokeapi.co/api/v2/pokemon/${key}/`);
-    if (!r.ok) throw new Error('not found');
+    if (!r.ok) return { base_hp: 0, base_speed: 0, evolution_stages: 1 };
+    const d = await r.json();
+    const stats = {};
+    d.stats.forEach(s => { stats[s.stat.name] = s.base_stat; });
+    const evo = await getEvolutionStages(d.species.url);
+    return { base_hp: stats['hp']||0, base_speed: stats['speed']||0, evolution_stages: evo };
+  } catch(e) { return { base_hp: 0, base_speed: 0, evolution_stages: 1 }; }
+}
+
+async function getPokeAPIFallback(key) {
+  try {
+    const r = await fetch(`https://pokeapi.co/api/v2/pokemon/${key}/`);
+    if (!r.ok) return null;
     const d = await r.json();
     const types = d.types.map(t => t.type.name);
     const stats = {};
     d.stats.forEach(s => { stats[s.stat.name] = s.base_stat; });
     const weight_kg = d.weight / 10;
     const evo = await getEvolutionStages(d.species.url);
-    const info = { types, weight_kg, base_hp: stats['hp']||0, base_speed: stats['speed']||0, evolution_stages: evo };
+    const info = { types, weight_kg, tier: undefined, bst: 0,
+                   base_hp: stats['hp']||0, base_speed: stats['speed']||0, evolution_stages: evo };
     pokeCache[key] = info;
     return info;
   } catch(e) { return null; }
@@ -470,6 +523,7 @@ let channel = '';
 let stopping = false;
 let reconnectTimer = null;
 let pingTimer = null;
+let spawnTimerBall = null;
 
 function connect() {
   if (ws) { ws.onclose = null; ws.close(); }
@@ -542,15 +596,27 @@ function handleLine(line) {
 
 async function handleSpawn(pokemon) {
   spinBall(true);
+
+  // Cancel any previous spawn's Timer Ball countdown
+  if (spawnTimerBall) { clearTimeout(spawnTimerBall); spawnTimerBall = null; }
+
+  // Schedule Timer Ball reminder at 80s (10s left in the 90s window)
+  spawnTimerBall = setTimeout(() => {
+    const timerMsg = `Timer Ball NOW! 10 seconds left to catch ${pokemon}!`;
+    sendChat(timerMsg);
+    log(`Timer Ball reminder sent for ${pokemon}`, 'sent');
+    spawnTimerBall = null;
+  }, 80000);
+
   log(`Looking up ${pokemon}…`, 'info');
   const info = await getPokemonInfo(pokemon);
   let chatMsg;
   if (!info) {
-    chatMsg = `Recommended Pokéballs for ${pokemon}: Ultra Ball`;
+    chatMsg = `${pokemon} — Recommended Pokéballs: Ultra Ball`;
     log(`No data for ${pokemon}, falling back to Ultra Ball.`, 'warn');
   } else {
     const recs = recommendBalls(info);
-    chatMsg = formatMessage(pokemon, recs);
+    chatMsg = formatMessage(pokemon, info, recs);
   }
   sendChat(chatMsg);
   showToast(chatMsg);
@@ -567,6 +633,7 @@ function sendChat(msg) {
 function clearTimers() {
   if (pingTimer)     { clearInterval(pingTimer);   pingTimer = null; }
   if (reconnectTimer){ clearTimeout(reconnectTimer); reconnectTimer = null; }
+  if (spawnTimerBall){ clearTimeout(spawnTimerBall);  spawnTimerBall = null; }
 }
 
 // ═══════════════════════════════════════════════════════════════
