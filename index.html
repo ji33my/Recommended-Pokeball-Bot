@@ -452,7 +452,7 @@ function countStages(node) {
 //  TWITCH IRC OVER WEBSOCKET
 // ═══════════════════════════════════════════════════════════════
 const SPAWN_BOT = 'pokemoncommunitygame';
-const SPAWN_RE  = /^A wild (.+?) appears Catch it using !pokecatch/i;
+const SPAWN_RE  = /^A wild (.+?)\s*[\p{Emoji}\s]*appears[\s\p{Emoji}]*Catch it using !pokecatch/iu;
 
 let ws = null;
 let channel = '';
