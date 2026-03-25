@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -228,21 +229,17 @@
 
   /* Spawn notification */
   #spawn-toast {
-    position: fixed;
-    bottom: 24px; left: 50%;
-    transform: translateX(-50%) translateY(80px);
+    display: none;
     background: var(--bg2);
     border: 1px solid var(--accent);
     border-radius: 10px;
     padding: 14px 20px;
     font-size: 11px;
-    max-width: 520px;
-    width: calc(100% - 48px);
-    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
-    z-index: 100;
-    box-shadow: 0 0 30px rgba(124,58,237,0.2);
+    width: 100%;
+    margin-top: 16px;
+    box-shadow: 0 0 20px rgba(124,58,237,0.15);
   }
-  #spawn-toast.show { transform: translateX(-50%) translateY(0); }
+  #spawn-toast.show { display: block; }
   #spawn-toast .toast-title {
     font-family: var(--pixel);
     font-size: 7px;
@@ -324,6 +321,11 @@
       <div id="log"></div>
     </div>
 
+    <div id="spawn-toast">
+      <div class="toast-title">LAST SPAWN</div>
+      <div class="toast-msg" id="toast-msg"></div>
+    </div>
+
     <div class="bot-controls">
       <button class="danger" onclick="stopBot()">STOP BOT</button>
       <button onclick="changeChannel()" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);">Change Channel</button>
@@ -343,11 +345,6 @@
 
 </div>
 
-<!-- Spawn toast -->
-<div id="spawn-toast">
-  <div class="toast-title">POKÉMON SPAWNED</div>
-  <div class="toast-msg" id="toast-msg"></div>
-</div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════
@@ -369,11 +366,11 @@ function recommendBalls(info) {
   const types = info.types.map(t => t.toLowerCase());
   const w = info.weight_kg, hp = info.base_hp, spd = info.base_speed;
 
-  recs.push({ name: 'Ultra Ball', reason: 'reliable all-around' });
+  recs.push({ name: 'Ultra Ball', reason: '80%' });
 
   if (types.includes('water') || types.includes('bug')) {
     const m = types.filter(t => ['water','bug'].includes(t)).map(capitalize).join(' & ');
-    recs.push({ name: 'Net Ball', reason: '70%' });
+    recs.push({ name: 'Net Ball', reason: '80%' });
   }
   if (types.includes('ghost'))
     recs.push({ name: 'Phantom Ball', reason: '80%' });
@@ -383,11 +380,11 @@ function recommendBalls(info) {
     recs.push({ name: 'Frozen Ball', reason: '80%' });
   if (types.includes('poison') || types.includes('psychic')) {
     const m = types.filter(t => ['poison','psychic'].includes(t)).map(capitalize).join(' & ');
-    recs.push({ name: 'Cipher Ball', reason: '70%' });
+    recs.push({ name: 'Cipher Ball', reason: '80%' });
   }
   if (types.includes('electric') || types.includes('steel')) {
     const m = types.filter(t => ['electric','steel'].includes(t)).map(capitalize).join(' & ');
-    recs.push({ name: 'Magnet Ball', reason: '70%' });
+    recs.push({ name: 'Magnet Ball', reason: '80%' });
   }
   if (types.includes('normal'))
     recs.push({ name: 'Basic Ball', reason: '80%' });
@@ -395,7 +392,7 @@ function recommendBalls(info) {
     const m = types.filter(t => ['fairy','dragon'].includes(t)).map(capitalize).join(' & ');
     recs.push({ name: 'Fantasy Ball', reason: '80%' });
   }
-  if (types.includes('ground'))
+  if (types.includes('ground') || types.includes('rock'))
     recs.push({ name: 'Geo Ball', reason: '80%' });
   if (types.includes('fighting') || types.includes('flying')) {
     const m = types.filter(t => ['fighting','flying'].includes(t)).map(capitalize).join(' & ');
@@ -407,12 +404,12 @@ function recommendBalls(info) {
   }
   if (spd >= MIN_SPEED) recs.push({ name: 'Fast Ball',    reason: `80% — ${spd} base Speed` });
   if (hp  >= MIN_HP)    recs.push({ name: 'Heal Ball',    reason: `80% — ${hp} base HP` });
-  if (w   >= HEAVY_KG)  recs.push({ name: 'Heavy Ball',   reason: 'scales up to 80% on heavy Pokémon' });
-  else if (w <= FEATHER_KG) recs.push({ name: 'Feather Ball', reason: 'scales up to 80% on light Pokémon' });
+  if (w   >= HEAVY_KG)  recs.push({ name: 'Heavy Ball',   reason: '80%' });
+  else if (w <= FEATHER_KG) recs.push({ name: 'Feather Ball', reason: '80%' });
   if (info.evolution_stages >= 3)
     recs.push({ name: 'Nest Ball', reason: '90% — 3-stage evolution' });
 
-  recs.push({ name: 'Repeat Ball', reason: '75% — if already in your Pokédex' });
+  recs.push({ name: 'Repeat Ball', reason: "75% — if you already caught this Pokémon" });
   return recs;
 }
 
@@ -649,13 +646,9 @@ function spinBall(on) {
   document.getElementById('ball-icon').classList.toggle('spinning', on);
 }
 
-let toastTimer;
 function showToast(msg) {
-  const t = document.getElementById('spawn-toast');
   document.getElementById('toast-msg').textContent = msg;
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 8000);
+  document.getElementById('spawn-toast').classList.add('show');
 }
 
 function log(msg, level='info') {
