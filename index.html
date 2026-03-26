@@ -406,8 +406,8 @@ function recommendBalls(info) {
   if (hp  >= MIN_HP)    recs.push({ name: 'Heal Ball',    reason: `80% — ${hp} base HP` });
   if (w   >= HEAVY_KG)  recs.push({ name: 'Heavy Ball',   reason: '80%' });
   else if (w <= FEATHER_KG) recs.push({ name: 'Feather Ball', reason: '80%' });
-  if (info.evolution_stages === 1 || info.evolution_stages >= 3)
-    recs.push({ name: 'Nest Ball', reason: '90%' });
+  if (info.evolution_stages >= 3 && info.evolution_stage === 1)
+    recs.push({ name: 'Nest Ball', reason: '90% — Stage 1 of 3' });
 
   recs.push({ name: 'Repeat Ball', reason: "75% — if you already caught this Pokémon" });
   return recs;
@@ -475,6 +475,7 @@ async function getPokemonInfo(name) {
         base_hp:          extra.base_hp,
         base_speed:       extra.base_speed,
         evolution_stages: extra.evolution_stages,
+        evolution_stage:  extra.evolution_stage,
       };
       pokeCache[key] = info;
       return info;
@@ -492,13 +493,13 @@ async function getPokemonInfo(name) {
 async function getPokeAPIStats(key) {
   try {
     const r = await fetch(`https://pokeapi.co/api/v2/pokemon/${key}/`);
-    if (!r.ok) return { base_hp: 0, base_speed: 0, evolution_stages: 1 };
+    if (!r.ok) return { base_hp: 0, base_speed: 0, evolution_stages: 1, evolution_stage: 1 };
     const d = await r.json();
     const stats = {};
     d.stats.forEach(s => { stats[s.stat.name] = s.base_stat; });
-    const evo = await getEvolutionStages(d.species.url);
-    return { base_hp: stats['hp']||0, base_speed: stats['speed']||0, evolution_stages: evo };
-  } catch(e) { return { base_hp: 0, base_speed: 0, evolution_stages: 1 }; }
+    const evo = await getEvolutionInfo(d.species.url, key);
+    return { base_hp: stats['hp']||0, base_speed: stats['speed']||0, evolution_stages: evo.total, evolution_stage: evo.current };
+  } catch(e) { return { base_hp: 0, base_speed: 0, evolution_stages: 1, evolution_stage: 1 }; }
 }
 
 async function getPokeAPIFallback(key) {
@@ -510,20 +511,32 @@ async function getPokeAPIFallback(key) {
     const stats = {};
     d.stats.forEach(s => { stats[s.stat.name] = s.base_stat; });
     const weight_kg = d.weight / 10;
-    const evo = await getEvolutionStages(d.species.url);
+    const evo = await getEvolutionInfo(d.species.url, key);
     const info = { types, weight_kg, tier: undefined, bst: 0,
-                   base_hp: stats['hp']||0, base_speed: stats['speed']||0, evolution_stages: evo };
+                   base_hp: stats['hp']||0, base_speed: stats['speed']||0,
+                   evolution_stages: evo.total, evolution_stage: evo.current };
     pokeCache[key] = info;
     return info;
   } catch(e) { return null; }
 }
 
-async function getEvolutionStages(speciesUrl) {
+async function getEvolutionInfo(speciesUrl, pokemonKey) {
   try {
     const s = await fetch(speciesUrl).then(r=>r.json());
     const c = await fetch(s.evolution_chain.url).then(r=>r.json());
-    return countStages(c.chain);
-  } catch(e) { return 1; }
+    const total = countStages(c.chain);
+    const current = findStage(c.chain, s.name, 1);
+    return { total, current: current ?? 1 };
+  } catch(e) { return { total: 1, current: 1 }; }
+}
+
+function findStage(node, speciesName, depth) {
+  if (node.species.name === speciesName) return depth;
+  for (const next of (node.evolves_to || [])) {
+    const found = findStage(next, speciesName, depth + 1);
+    if (found !== null) return found;
+  }
+  return null;
 }
 
 function countStages(node) {
