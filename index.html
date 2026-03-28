@@ -332,6 +332,18 @@
     </div>
 
     <div class="card" style="margin-top:16px;">
+      <div class="card-label">Manual Lookup — !rb</div>
+      <div class="input-row">
+        <div class="input-wrap">
+          <span style="color:var(--accent2);font-size:11px;margin-right:6px;">!rb</span>
+          <input type="text" id="rb-input" placeholder="Pikachu" autocomplete="off" spellcheck="false">
+        </div>
+        <button onclick="triggerRbLocal()" style="background:var(--accent);">LOOK UP</button>
+      </div>
+      <p class="hint" style="margin-top:8px;">Runs a full ball recommendation for any Pokémon locally, without sending anything to chat. You can also type <code>!rb Pikachu</code> in your Twitch chat to trigger it remotely.</p>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
       <div class="card-label">Test — Send a Message to Chat</div>
       <div class="input-row">
         <div class="input-wrap">
@@ -430,6 +442,22 @@ function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 // ═══════════════════════════════════════════════════════════════
 const pokeCache = {};
 
+// Polls the pokeCache for a tier on either key, checking every 500ms for up to maxMs
+function pollChatCacheForTier(baseKey, formKey, maxMs) {
+  return new Promise(resolve => {
+    const start = Date.now();
+    const check = () => {
+      const t1 = pokeCache[baseKey]?.tier;
+      const t2 = formKey ? pokeCache[formKey]?.tier : undefined;
+      const found = t1 !== undefined ? t1 : t2;
+      if (found !== undefined) return resolve(found);
+      if (Date.now() - start >= maxMs) return resolve(undefined);
+      setTimeout(check, 500);
+    };
+    check();
+  });
+}
+
 async function getPokemonInfo(name) {
   // Extract form name from parentheses e.g. "Maushold (Family of Four)" → form = "family-of-four"
   const formMatch = name.match(/\(([^)]+)\)/);
@@ -457,20 +485,44 @@ async function getPokemonInfo(name) {
     // First attempt — base name (e.g. "maushold")
     let nerd = await fetchNerdotron(key);
 
-    // If empty and there's a form, retry with hyphenated form (e.g. "maushold-family-of-four")
-    if (!nerd && formSuffix) {
+    // If empty OR has no tier, and there's a form suffix, retry with the form key
+    // e.g. "palafin" returns data but no tier — "palafin-zero" has the real entry
+    if (formSuffix && (!nerd || nerd.tier === undefined)) {
       const formKey = `${key}-${formSuffix}`;
       log(`Retrying API with form key: ${formKey}`, 'info');
-      nerd = await fetchNerdotron(formKey);
+      const formNerd = await fetchNerdotron(formKey);
+      if (formNerd) nerd = formNerd;
     }
 
     if (nerd) {
       // Get HP/Speed/evo stages from PokeAPI
       const extra = await getPokeAPIStats(key);
+      // If Nerdotron returned no tier, check if Deemon's chat already cached one
+      let chatTier = (pokeCache[key] && pokeCache[key].tier !== undefined) ? pokeCache[key].tier : undefined;
+      // Also check the form key (e.g. "palafin-zero")
+      if (chatTier === undefined && formSuffix) {
+        const fk = `${key}-${formSuffix}`;
+        chatTier = (pokeCache[fk] && pokeCache[fk].tier !== undefined) ? pokeCache[fk].tier : undefined;
+      }
+      let resolvedTier = (nerd.tier !== undefined) ? nerd.tier : chatTier;
+
+      // If tier still unknown, wait up to 10s for Deemon's PCG auto-message to arrive
+      if (resolvedTier === undefined) {
+        log(`Tier unknown for ${cleanName} — waiting up to 10s for Deemon chat…`, 'warn');
+        resolvedTier = await pollChatCacheForTier(key, formSuffix ? `${key}-${formSuffix}` : null, 10000);
+        if (resolvedTier !== undefined) {
+          log(`Got tier from Deemon chat for ${cleanName}: ${['C','B','A','S'][resolvedTier]}`, 'info');
+        } else {
+          log(`Tier not confirmed for ${cleanName} after 10s — not sending`, 'warn');
+        }
+      } else if (nerd.tier === undefined && chatTier !== undefined) {
+        log(`Using chat-cached tier for ${cleanName}: ${['C','B','A','S'][chatTier]}`, 'info');
+      }
+
       const info = {
         types: nerd.types,
         weight_kg: nerd.weight_kg,
-        tier: nerd.tier,
+        tier: resolvedTier,
         bst: nerd.bst,
         base_hp:          extra.base_hp,
         base_speed:       extra.base_speed,
@@ -483,7 +535,29 @@ async function getPokemonInfo(name) {
 
     // Full fallback to PokeAPI only (no tier)
     log(`Nerdotron failed for ${name}, falling back to PokeAPI`, 'warn');
-    return await getPokeAPIFallback(key);
+    const fallback = await getPokeAPIFallback(key);
+    if (fallback && (fallback.tier === undefined || fallback.tier === null)) {
+      let chatTier = (pokeCache[key] && pokeCache[key].tier !== undefined) ? pokeCache[key].tier : undefined;
+      if (chatTier === undefined && formSuffix) {
+        const fk = `${key}-${formSuffix}`;
+        chatTier = (pokeCache[fk] && pokeCache[fk].tier !== undefined) ? pokeCache[fk].tier : undefined;
+      }
+      if (chatTier !== undefined) {
+        fallback.tier = chatTier;
+        log(`Using chat-cached tier for ${cleanName} (PokeAPI fallback): ${['C','B','A','S'][chatTier]}`, 'info');
+      } else {
+        // Wait up to 10s for Deemon's PCG auto-message
+        log(`Tier unknown for ${cleanName} (PokeAPI fallback) — waiting up to 10s for Deemon chat…`, 'warn');
+        const deemonTier = await pollChatCacheForTier(key, formSuffix ? `${key}-${formSuffix}` : null, 10000);
+        if (deemonTier !== undefined) {
+          fallback.tier = deemonTier;
+          log(`Got tier from Deemon chat for ${cleanName}: ${['C','B','A','S'][deemonTier]}`, 'info');
+        } else {
+          log(`Tier not confirmed for ${cleanName} after 10s — not sending`, 'warn');
+        }
+      }
+    }
+    return fallback;
   } catch(e) {
     log(`Nerdotron failed for ${name}, falling back to PokeAPI`, 'warn');
     return await getPokeAPIFallback(key);
@@ -550,6 +624,75 @@ function countStages(node) {
 const SPAWN_BOT = 'pokemoncommunitygame';
 const SPAWN_RE  = /A wild ([\w .':’‘’♀♂-]+?(?:\s*\([^)]+\))?)\s*appears\b/iu;
 
+
+// Matches PCG stat message: "Pokémon: Nosepass - Tier: C - Type: Rock - ..."
+const STAT_RE = /Pok[eé]mon:\s*([\w .':\u2019\u2018\u2019\u2019\u266a\u2640\u2642-]+?(?:\s*\([^)]+\))?)\s*-\s*Tier:\s*([SABC?])/iu;
+const TIER_LETTER_MAP = { S: 3, A: 2, B: 1, C: 0 };
+
+// Secondary WebSocket — always watches #deemonrider for PCG stat messages
+const DEEMON_CHANNEL = 'deemonrider';
+let wsDee = null;
+let deemonReconnectTimer = null;
+let deemonPingTimer = null;
+
+function connectDeemon() {
+  if (wsDee) { wsDee.onclose = null; wsDee.close(); }
+  if (deemonReconnectTimer) { clearTimeout(deemonReconnectTimer); deemonReconnectTimer = null; }
+  if (deemonPingTimer) { clearInterval(deemonPingTimer); deemonPingTimer = null; }
+  log(`[Deemon] Connecting to #${DEEMON_CHANNEL} for tier data…`, 'info');
+  wsDee = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
+  wsDee.onopen = () => {
+    wsDee.send('PASS SCHMOOPIIE');
+    wsDee.send('NICK justinfan31337');
+    wsDee.send(`JOIN #${DEEMON_CHANNEL}`);
+    deemonPingTimer = setInterval(() => wsDee && wsDee.readyState === 1 && wsDee.send('PING :tmi.twitch.tv'), 4*60*1000);
+  };
+  wsDee.onmessage = (e) => { e.data.split('\r\n').forEach(handleDeemonLine); };
+  wsDee.onerror = () => log('[Deemon] WebSocket error', 'warn');
+  wsDee.onclose = () => {
+    if (deemonPingTimer) { clearInterval(deemonPingTimer); deemonPingTimer = null; }
+    if (stopping) return;
+    log(`[Deemon] Disconnected — reconnecting in 30s…`, 'warn');
+    deemonReconnectTimer = setTimeout(connectDeemon, 30000);
+  };
+}
+
+function handleDeemonLine(line) {
+  if (!line) return;
+  if (line.startsWith('PING')) { wsDee.send('PONG :tmi.twitch.tv'); return; }
+  const m = line.match(/:([^!]+)![^ ]+ PRIVMSG #[^ ]+ :(.+)/);
+  if (!m) return;
+  const nick = m[1].toLowerCase();
+  if (nick !== SPAWN_BOT) return;
+  let msg = m[2].trim();
+  if (msg.startsWith('\x01ACTION ')) msg = msg.slice(8).replace(/\x01$/, '').trim();
+  else if (msg.startsWith('\u0001ACTION ')) msg = msg.slice(8).replace(/\u0001$/, '').trim();
+  const sm = msg.match(STAT_RE);
+  if (!sm) return;
+  const rawName = sm[1].trim();
+  const tierLetter = sm[2].toUpperCase();
+  const tierInt = TIER_LETTER_MAP[tierLetter];
+  if (tierInt === undefined) return;
+
+  // Build both the base key and the form key so either lookup path hits the cache
+  // e.g. "Palafin (Zero)" → base key "palafin" AND form key "palafin-zero"
+  const formMatch = rawName.match(/\(([^)]+)\)/);
+  const baseName = rawName.replace(/\s*\([^)]+\)|♪|♀|♂/gi, '').trim();
+  const baseKey = baseName.toLowerCase().replace(/ /g, '-');
+  const formKey = formMatch ? `${baseKey}-${formMatch[1].toLowerCase().replace(/\s+/g, '-')}` : null;
+
+  const keysToCache = [baseKey];
+  if (formKey && formKey !== baseKey) keysToCache.push(formKey);
+
+  for (const k of keysToCache) {
+    if (!pokeCache[k] || pokeCache[k].tier === undefined || pokeCache[k].tier === null) {
+      if (!pokeCache[k]) pokeCache[k] = {};
+      pokeCache[k].tier = tierInt;
+    }
+  }
+  log(`[Deemon] Tier cached from chat: ${rawName} = Tier ${tierLetter}`, 'info');
+}
+
 let ws = null;
 let channel = '';
 let stopping = false;
@@ -607,6 +750,15 @@ function handleLine(line) {
   // DEBUG: log every single chat message so we can see exactly what's arriving
   log(`[MSG] ${nick}: ${msg}`, 'info');
 
+  // !rb command — anyone can trigger a manual lookup: !rb Pikachu
+  const rbMatch = msg.match(/^!rb\s+(.+)/i);
+  if (rbMatch) {
+    const pokemon = rbMatch[1].trim();
+    log(`Manual lookup triggered by ${nick}: ${pokemon}`, 'spawn');
+    handleSpawn(pokemon);
+    return;
+  }
+
   if (nick !== SPAWN_BOT) {
     return;
   }
@@ -642,14 +794,21 @@ async function handleSpawn(pokemon) {
 
   log(`Looking up ${pokemon}…`, 'info');
   const info = await getPokemonInfo(pokemon);
-  let chatMsg;
+
+  // Do not send if tier could not be confirmed
   if (!info) {
-    chatMsg = `${pokemon} — Recommended Pokéballs: Ultra Ball`;
-    log(`No data for ${pokemon}, falling back to Ultra Ball.`, 'warn');
-  } else {
-    const recs = recommendBalls(info);
-    chatMsg = formatMessage(pokemon, info, recs);
+    log(`No data for ${pokemon} — not sending`, 'warn');
+    spinBall(false);
+    return;
   }
+  if (info.tier === undefined || info.tier === null) {
+    log(`Tier not confirmed for ${pokemon} — not sending recommendation`, 'warn');
+    spinBall(false);
+    return;
+  }
+
+  const recs = recommendBalls(info);
+  const chatMsg = formatMessage(pokemon, info, recs);
   sendChat(chatMsg);
   showToast(chatMsg);
   log(`Sent → ${chatMsg}`, 'sent');
@@ -734,12 +893,16 @@ function startBot() {
   stopping = false;
   spinBall(true);
   connect();
+  connectDeemon();
 }
 
 function stopBot() {
   stopping = true;
   clearTimers();
-  if (ws) { ws.onclose = null; ws.close(); ws = null; }
+  if (ws)    { ws.onclose    = null; ws.close();    ws    = null; }
+  if (wsDee) { wsDee.onclose = null; wsDee.close(); wsDee = null; }
+  if (deemonReconnectTimer) { clearTimeout(deemonReconnectTimer);  deemonReconnectTimer = null; }
+  if (deemonPingTimer)      { clearInterval(deemonPingTimer);       deemonPingTimer      = null; }
   setStatus('Stopped.', '');
   log('Bot stopped.', 'warn');
   spinBall(false);
@@ -749,6 +912,15 @@ function changeChannel() {
   stopBot();
   document.getElementById('bot-screen').style.display   = 'none';
   document.getElementById('setup-screen').style.display = 'block';
+}
+
+function triggerRbLocal() {
+  const input = document.getElementById('rb-input');
+  const pokemon = input.value.trim();
+  if (!pokemon) return;
+  log(`Manual lookup: ${pokemon}`, 'spawn');
+  handleSpawn(pokemon);
+  input.value = '';
 }
 
 function sendTestMessage() {
@@ -768,9 +940,12 @@ function sendTestMessage() {
 //  INIT — restore saved channel
 // ═══════════════════════════════════════════════════════════════
 window.addEventListener('load', () => {
-  const saved = localStorage.getItem('pokebot_channel');
+  let saved = null;
+  try { saved = localStorage.getItem('pokebot_channel'); } catch(e) {}
   if (saved) {
+    // Channel already known — skip setup screen and connect immediately
     document.getElementById('channel-input').value = saved;
+    startBot();
   }
   // Allow Enter key to start
   document.getElementById('channel-input').addEventListener('keydown', e => {
@@ -780,6 +955,11 @@ window.addEventListener('load', () => {
   const testInput = document.getElementById('test-msg-input');
   if (testInput) testInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') sendTestMessage();
+  });
+  // Enter key on rb input
+  const rbInput = document.getElementById('rb-input');
+  if (rbInput) rbInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') triggerRbLocal();
   });
 });
 </script>
