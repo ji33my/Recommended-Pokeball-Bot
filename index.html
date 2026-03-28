@@ -378,6 +378,8 @@ function recommendBalls(info) {
   const types = info.types.map(t => t.toLowerCase());
   const w = info.weight_kg, hp = info.base_hp, spd = info.base_speed;
 
+  recs.push({ name: 'Ultra Ball', reason: '80%' });
+  
   if (types.includes('water') || types.includes('bug')) {
     const m = types.filter(t => ['water','bug'].includes(t)).map(capitalize).join(' & ');
     recs.push({ name: 'Net Ball', reason: '80%' });
