@@ -368,8 +368,8 @@ const BOT_TOKEN = 'oauth:fbi0y1a0u14hzp4g11jmw30uik77ns'; // ← paste your rege
 // ═══════════════════════════════════════════════════════════════
 //  BALL RECOMMENDATION LOGIC
 // ═══════════════════════════════════════════════════════════════
-const HEAVY_KG   = 300;
-const FEATHER_KG = 20;
+const HEAVY_KG   = 500;
+const FEATHER_KG = 16;
 const MIN_SPEED  = 100;
 const MIN_HP     = 100;
 
@@ -377,6 +377,8 @@ function recommendBalls(info) {
   const recs = [];
   const types = info.types.map(t => t.toLowerCase());
   const w = info.weight_kg, hp = info.base_hp, spd = info.base_speed;
+
+  recs.push({ name: 'Ultra Ball', reason: '80%' });
 
   if (types.includes('water') || types.includes('bug')) {
     const m = types.filter(t => ['water','bug'].includes(t)).map(capitalize).join(' & ');
@@ -417,8 +419,9 @@ function recommendBalls(info) {
   if (w   >= HEAVY_KG)  recs.push({ name: 'Heavy Ball',   reason: '80%' });
   else if (w <= FEATHER_KG) recs.push({ name: 'Feather Ball', reason: '80%' });
   if (info.evolution_stages >= 3 && info.evolution_stage === 1)
-    recs.push({ name: 'Nest Ball', reason: '90%' });
+    recs.push({ name: 'Nest Ball', reason: '90% — Stage 1 of 3' });
 
+  recs.push({ name: 'Repeat Ball', reason: "75% — if you already caught this Pokémon" });
   return recs;
 }
 
@@ -439,15 +442,17 @@ function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 // ═══════════════════════════════════════════════════════════════
 const pokeCache = {};
 
-// Polls the pokeCache for a tier on either key, checking every 500ms for up to maxMs
-function pollChatCacheForTier(baseKey, formKey, maxMs) {
+// Polls the pokeCache for a tier, checking all provided keys every 500ms for up to maxMs
+// Now accepts an array of keys so all slug variants are checked simultaneously
+function pollChatCacheForTier(keys, maxMs) {
+  const keyArr = Array.isArray(keys) ? keys : [keys];
   return new Promise(resolve => {
     const start = Date.now();
     const check = () => {
-      const t1 = pokeCache[baseKey]?.tier;
-      const t2 = formKey ? pokeCache[formKey]?.tier : undefined;
-      const found = t1 !== undefined ? t1 : t2;
-      if (found !== undefined) return resolve(found);
+      for (const k of keyArr) {
+        const t = pokeCache[k]?.tier;
+        if (t !== undefined) return resolve(t);
+      }
       if (Date.now() - start >= maxMs) return resolve(undefined);
       setTimeout(check, 500);
     };
@@ -455,111 +460,160 @@ function pollChatCacheForTier(baseKey, formKey, maxMs) {
   });
 }
 
+
 async function getPokemonInfo(name) {
-  // Extract form name from parentheses e.g. "Maushold (Family of Four)" → form = "family-of-four"
+  // Parse the raw name into normalised keys, same as Bouncing-Pokemon script
   const formMatch = name.match(/\(([^)]+)\)/);
-  const formSuffix = formMatch ? formMatch[1].toLowerCase().replace(/\s+/g, '-') : null;
+  const formHint  = formMatch ? formMatch[1].trim() : null;
+  const baseSlug  = toPokeSlug(name);   // handles accents, apostrophes, spaces, parentheticals
+  const cacheKey  = baseSlug;
+  if (pokeCache[cacheKey] && pokeCache[cacheKey].types) return pokeCache[cacheKey];
 
-  // Clean name: strip gender markers and parentheticals for base lookup
-  const cleanName = name.replace(/\s*\([^)]+\)|♀|♂/gi, '').trim();
-  const key = cleanName.toLowerCase().replace(/ /g, '-');
-  if (pokeCache[key]) return pokeCache[key];
+  // All slug variants to try against Nerdotron and PokeAPI in order
+  const slugs = buildSlugVariants(baseSlug, formHint);
+  log(`[Lookup] Slug variants: ${slugs.join(', ')}`, 'info');
 
-  // Helper to fetch full info from Nerdotron
+  // Helper: try Nerdotron with a specific key
   async function fetchNerdotron(lookupKey) {
-    const r = await fetch(`https://api.nerdotron.app/pcg/${encodeURIComponent(lookupKey)}`);
-    if (!r.ok) return null;
-    const d = await r.json();
-    if (!d || Object.keys(d).length === 0) return null;
-    const types = (d.types || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
-    const weight_kg = parseFloat(d.weight) || 0;
-    const tier = d.tierInt !== undefined ? parseInt(d.tierInt) : undefined;
-    const bst  = parseInt(d.bst) || 0;
-    return { types, weight_kg, tier, bst };
+    try {
+      const r = await fetch(`https://api.nerdotron.app/pcg/${encodeURIComponent(lookupKey)}`);
+      if (!r.ok) return null;
+      const d = await r.json();
+      if (!d || Object.keys(d).length === 0) return null;
+      const types = (d.types || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
+      if (!types.length) return null;
+      const weight_kg = parseFloat(d.weight) || 0;
+      // Nerdotron sometimes returns tierInt as "" (empty string) — treat that as missing
+      const tierRaw = parseInt(d.tierInt);
+      const tier = (d.tierInt !== undefined && d.tierInt !== '' && !isNaN(tierRaw)) ? tierRaw : undefined;
+      const bst  = parseInt(d.bst) || 0;
+      return { types, weight_kg, tier, bst };
+    } catch(e) { return null; }
+  }
+
+  // Helper: try PokeAPI directly with a specific key
+  async function fetchPokeAPI(lookupKey) {
+    try {
+      const r = await fetch(`https://pokeapi.co/api/v2/pokemon/${encodeURIComponent(lookupKey)}/`);
+      if (!r.ok) return null;
+      return await r.json();
+    } catch(e) { return null; }
+  }
+
+  // Helper: try PokeAPI species varieties (e.g. maushold → family-of-four)
+  async function fetchSpeciesVarieties(lookupKey) {
+    try {
+      const r = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${encodeURIComponent(lookupKey)}/`);
+      if (!r.ok) return null;
+      const s = await r.json();
+      for (const v of (s.varieties || [])) {
+        const parts = v.pokemon.url.replace(/\/+$/, '').split('/');
+        const vKey = parts[parts.length - 1];
+        const d = await fetchPokeAPI(vKey);
+        if (d) return d;
+      }
+      return null;
+    } catch(e) { return null; }
   }
 
   try {
-    // First attempt — base name (e.g. "maushold")
-    let nerd = await fetchNerdotron(key);
-
-    // If empty OR has no tier, and there's a form suffix, retry with the form key
-    // e.g. "palafin" returns data but no tier — "palafin-zero" has the real entry
-    if (formSuffix && (!nerd || nerd.tier === undefined)) {
-      const formKey = `${key}-${formSuffix}`;
-      log(`Retrying API with form key: ${formKey}`, 'info');
-      const formNerd = await fetchNerdotron(formKey);
-      if (formNerd) nerd = formNerd;
+    // ── Step 1: Nerdotron — try all slug variants ──────────────────────────────
+    let nerd = null;
+    let usedNerdSlug = null;
+    for (const slug of slugs) {
+      nerd = await fetchNerdotron(slug);
+      if (nerd) { usedNerdSlug = slug; break; }
+      log(`[Nerdotron] No result for "${slug}"`, 'info');
     }
 
-    if (nerd) {
-      // Get HP/Speed/evo stages from PokeAPI
-      const extra = await getPokeAPIStats(key);
-      // If Nerdotron returned no tier, check if Deemon's chat already cached one
-      let chatTier = (pokeCache[key] && pokeCache[key].tier !== undefined) ? pokeCache[key].tier : undefined;
-      // Also check the form key (e.g. "palafin-zero")
-      if (chatTier === undefined && formSuffix) {
-        const fk = `${key}-${formSuffix}`;
-        chatTier = (pokeCache[fk] && pokeCache[fk].tier !== undefined) ? pokeCache[fk].tier : undefined;
+    // ── Step 2: PokeAPI — get HP/Speed/evo (also serves as name validation) ───
+    let pokeData = null;
+    let usedPokeSlug = null;
+    for (const slug of slugs) {
+      pokeData = await fetchPokeAPI(slug);
+      if (pokeData) { usedPokeSlug = slug; break; }
+    }
+    // If direct slugs all failed, try species varieties
+    if (!pokeData) {
+      for (const slug of [baseSlug, baseSlug.split('-')[0]]) {
+        pokeData = await fetchSpeciesVarieties(slug);
+        if (pokeData) { usedPokeSlug = 'species-variety'; break; }
       }
-      let resolvedTier = (nerd.tier !== undefined) ? nerd.tier : chatTier;
+    }
 
-      // If tier still unknown, wait up to 10s for Deemon's PCG auto-message to arrive
-      if (resolvedTier === undefined) {
-        log(`Tier unknown for ${cleanName} — waiting up to 10s for Deemon chat…`, 'warn');
-        resolvedTier = await pollChatCacheForTier(key, formSuffix ? `${key}-${formSuffix}` : null, 10000);
-        if (resolvedTier !== undefined) {
-          log(`Got tier from Deemon chat for ${cleanName}: ${['C','B','A','S'][resolvedTier]}`, 'info');
-        } else {
-          log(`Tier not confirmed for ${cleanName} after 10s — not sending`, 'warn');
+    if (!pokeData && !nerd) {
+      log(`No data found for "${name}" after all lookup attempts`, 'warn');
+      return null;
+    }
+
+    // ── Step 3: Build extra stats from PokeAPI data ────────────────────────────
+    let extra = { base_hp: 0, base_speed: 0, evolution_stages: 1, evolution_stage: 1 };
+    if (pokeData) {
+      const stats = {};
+      pokeData.stats.forEach(s => { stats[s.stat.name] = s.base_stat; });
+      extra.base_hp    = stats['hp']    || 0;
+      extra.base_speed = stats['speed'] || 0;
+      if (pokeData.species?.url) {
+        const evo = await getEvolutionInfo(pokeData.species.url, pokeData.species.name || baseSlug);
+        extra.evolution_stages = evo.total;
+        extra.evolution_stage  = evo.current;
+      }
+      // If Nerdotron failed but PokeAPI succeeded, build minimal nerd-like data from PokeAPI
+      if (!nerd) {
+        log(`Nerdotron failed, using PokeAPI types/weight for "${name}"`, 'warn');
+        nerd = {
+          types: pokeData.types.map(t => t.type.name),
+          weight_kg: pokeData.weight / 10,
+          tier: undefined,
+          bst: 0,
+        };
+      }
+    }
+
+    // ── Step 4: Resolve tier ──────────────────────────────────────────────────
+    // Check cache under all slug variants (Deemon may have cached under a different slug)
+    let resolvedTier = nerd.tier;
+    if (resolvedTier === undefined) {
+      for (const slug of slugs) {
+        if (pokeCache[slug]?.tier !== undefined) {
+          resolvedTier = pokeCache[slug].tier;
+          log(`Using chat-cached tier for "${name}" (key: ${slug}): ${['C','B','A','S'][resolvedTier]}`, 'info');
+          break;
         }
-      } else if (nerd.tier === undefined && chatTier !== undefined) {
-        log(`Using chat-cached tier for ${cleanName}: ${['C','B','A','S'][chatTier]}`, 'info');
       }
-
-      const info = {
-        types: nerd.types,
-        weight_kg: nerd.weight_kg,
-        tier: resolvedTier,
-        bst: nerd.bst,
-        base_hp:          extra.base_hp,
-        base_speed:       extra.base_speed,
-        evolution_stages: extra.evolution_stages,
-        evolution_stage:  extra.evolution_stage,
-      };
-      pokeCache[key] = info;
-      return info;
     }
 
-    // Full fallback to PokeAPI only (no tier)
-    log(`Nerdotron failed for ${name}, falling back to PokeAPI`, 'warn');
-    const fallback = await getPokeAPIFallback(key);
-    if (fallback && (fallback.tier === undefined || fallback.tier === null)) {
-      let chatTier = (pokeCache[key] && pokeCache[key].tier !== undefined) ? pokeCache[key].tier : undefined;
-      if (chatTier === undefined && formSuffix) {
-        const fk = `${key}-${formSuffix}`;
-        chatTier = (pokeCache[fk] && pokeCache[fk].tier !== undefined) ? pokeCache[fk].tier : undefined;
-      }
-      if (chatTier !== undefined) {
-        fallback.tier = chatTier;
-        log(`Using chat-cached tier for ${cleanName} (PokeAPI fallback): ${['C','B','A','S'][chatTier]}`, 'info');
+    // If still unknown, poll for up to 10s for Deemon's PCG stat message to arrive
+    if (resolvedTier === undefined) {
+      log(`Tier unknown for "${name}" — waiting up to 10s for Deemon chat…`, 'warn');
+      resolvedTier = await pollChatCacheForTier(slugs, 10000);
+      if (resolvedTier !== undefined) {
+        log(`Got tier from Deemon chat for "${name}": ${['C','B','A','S'][resolvedTier]}`, 'info');
       } else {
-        // Wait up to 10s for Deemon's PCG auto-message
-        log(`Tier unknown for ${cleanName} (PokeAPI fallback) — waiting up to 10s for Deemon chat…`, 'warn');
-        const deemonTier = await pollChatCacheForTier(key, formSuffix ? `${key}-${formSuffix}` : null, 10000);
-        if (deemonTier !== undefined) {
-          fallback.tier = deemonTier;
-          log(`Got tier from Deemon chat for ${cleanName}: ${['C','B','A','S'][deemonTier]}`, 'info');
-        } else {
-          log(`Tier not confirmed for ${cleanName} after 10s — not sending`, 'warn');
-        }
+        log(`Tier not confirmed for "${name}" after 10s`, 'warn');
       }
     }
-    return fallback;
+
+    const info = {
+      types:            nerd.types,
+      weight_kg:        nerd.weight_kg,
+      tier:             resolvedTier,
+      bst:              nerd.bst,
+      base_hp:          extra.base_hp,
+      base_speed:       extra.base_speed,
+      evolution_stages: extra.evolution_stages,
+      evolution_stage:  extra.evolution_stage,
+    };
+    // Cache under all slug variants so future lookups are instant
+    for (const slug of slugs) { pokeCache[slug] = info; }
+    return info;
+
   } catch(e) {
-    log(`Nerdotron failed for ${name}, falling back to PokeAPI`, 'warn');
-    return await getPokeAPIFallback(key);
+    log(`getPokemonInfo error for "${name}": ${e.message}`, 'error');
+    return null;
   }
 }
+
 
 async function getPokeAPIStats(key) {
   try {
@@ -619,12 +673,43 @@ function countStages(node) {
 //  TWITCH IRC OVER WEBSOCKET
 // ═══════════════════════════════════════════════════════════════
 const SPAWN_BOT = 'pokemoncommunitygame';
-const SPAWN_RE  = /A wild ([\w .':’‘’♀♂-]+?(?:\s*\([^)]+\))?)\s*appears\b/iu;
-
+// Captures full name including optional parenthetical form
+const SPAWN_RE  = /A wild ([\w .'\u2018\u2019\u201a\u201b\u2032\u2035:\u266a\u2640\u2642-]+?(?:\s*\([^)]+\))?)\s*appears\b/iu;
 
 // Matches PCG stat message: "Pokémon: Nosepass - Tier: C - Type: Rock - ..."
-const STAT_RE = /Pok[eé]mon:\s*([\w .':\u2019\u2018\u2019\u2019\u266a\u2640\u2642-]+?(?:\s*\([^)]+\))?)\s*-\s*Tier:\s*([SABC?])/iu;
+const STAT_RE = /Pok[eé]mon:\s*([\w .'\u2018\u2019\u201a\u201b\u2032\u2035:\u266a\u2640\u2642-]+?(?:\s*\([^)]+\))?)\s*-\s*Tier:\s*([SABC?])/iu;
 const TIER_LETTER_MAP = { S: 3, A: 2, B: 1, C: 0 };
+
+// ─── Shared name normalisation ────────────────────────────────────────────────
+// Converts any raw pokemon name into a consistent hyphen-slug for API lookups.
+function toPokeSlug(raw) {
+  return raw
+    .toLowerCase()
+    .replace(/\u00e9/g, 'e')
+    .replace(/['\u2018\u2019\u201a\u201b\u2032\u2035]/g, "'")
+    .replace(/[\u2640\u2642\u266a]/g, '')
+    .replace(/\s*\([^)]+\)/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9\-']/g, '');
+}
+
+// Build all slug variants to try in priority order
+function buildSlugVariants(baseSlug, formHint) {
+  const variants = [];
+  const formSlug = formHint
+    ? baseSlug + '-' + formHint.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+    : null;
+  if (formSlug) variants.push(formSlug);
+  variants.push(baseSlug);
+  const spaceVar = baseSlug.replace(/-/g, ' ');
+  if (spaceVar !== baseSlug) variants.push(spaceVar);
+  const noSep = baseSlug.replace(/[-']/g, '');
+  if (noSep !== baseSlug && !variants.includes(noSep)) variants.push(noSep);
+  const root = baseSlug.split('-')[0];
+  if (root !== baseSlug && !variants.includes(root)) variants.push(root);
+  return variants;
+}
 
 // Secondary WebSocket — always watches #deemonrider for PCG stat messages
 const DEEMON_CHANNEL = 'deemonrider';
@@ -671,23 +756,20 @@ function handleDeemonLine(line) {
   const tierInt = TIER_LETTER_MAP[tierLetter];
   if (tierInt === undefined) return;
 
-  // Build both the base key and the form key so either lookup path hits the cache
-  // e.g. "Palafin (Zero)" → base key "palafin" AND form key "palafin-zero"
+  // Use toPokeSlug for consistent key generation — same as getPokemonInfo
   const formMatch = rawName.match(/\(([^)]+)\)/);
-  const baseName = rawName.replace(/\s*\([^)]+\)|♪|♀|♂/gi, '').trim();
-  const baseKey = baseName.toLowerCase().replace(/ /g, '-');
-  const formKey = formMatch ? `${baseKey}-${formMatch[1].toLowerCase().replace(/\s+/g, '-')}` : null;
+  const formHint  = formMatch ? formMatch[1].trim() : null;
+  const baseSlug  = toPokeSlug(rawName);
+  const slugs     = buildSlugVariants(baseSlug, formHint);
 
-  const keysToCache = [baseKey];
-  if (formKey && formKey !== baseKey) keysToCache.push(formKey);
-
-  for (const k of keysToCache) {
+  // Cache tier under all variant keys so any lookup path can find it
+  for (const k of slugs) {
     if (!pokeCache[k] || pokeCache[k].tier === undefined || pokeCache[k].tier === null) {
       if (!pokeCache[k]) pokeCache[k] = {};
       pokeCache[k].tier = tierInt;
     }
   }
-  log(`[Deemon] Tier cached from chat: ${rawName} = Tier ${tierLetter}`, 'info');
+  log(`[Deemon] Tier cached: ${rawName} = Tier ${tierLetter} (keys: ${slugs.join(', ')})`, 'info');
 }
 
 let ws = null;
