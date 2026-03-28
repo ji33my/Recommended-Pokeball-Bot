@@ -378,8 +378,6 @@ function recommendBalls(info) {
   const types = info.types.map(t => t.toLowerCase());
   const w = info.weight_kg, hp = info.base_hp, spd = info.base_speed;
 
-  recs.push({ name: 'Ultra Ball', reason: '80%' });
-
   if (types.includes('water') || types.includes('bug')) {
     const m = types.filter(t => ['water','bug'].includes(t)).map(capitalize).join(' & ');
     recs.push({ name: 'Net Ball', reason: '80%' });
@@ -421,7 +419,6 @@ function recommendBalls(info) {
   if (info.evolution_stages >= 3 && info.evolution_stage === 1)
     recs.push({ name: 'Nest Ball', reason: '90% — Stage 1 of 3' });
 
-  recs.push({ name: 'Repeat Ball', reason: "75% — if you already caught this Pokémon" });
   return recs;
 }
 
