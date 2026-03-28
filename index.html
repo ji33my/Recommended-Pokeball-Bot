@@ -427,7 +427,7 @@ function recommendBalls(info) {
 
 function formatMessage(pokemon, info, recs) {
   const tierMap = { 0: 'Tier C', 1: 'Tier B', 2: 'Tier A', 3: 'Tier S' };
-  const tier    = info.tier !== undefined ? tierMap[info.tier] ?? '' : '';
+  const tier    = info.tier !== undefined ? tierMap[info.tier] ?? 'Tier N/A' : 'Tier N/A';
   const types   = info.types.map(capitalize).join('/');
   const prefix  = [tier, types].filter(Boolean).join(' | ');
   const balls   = recs.map(r => `${r.name} (${r.reason})`).join(' | ');
@@ -880,11 +880,7 @@ async function handleSpawn(pokemon) {
     spinBall(false);
     return;
   }
-  if (info.tier === undefined || info.tier === null) {
-    log(`Tier not confirmed for ${pokemon} — not sending recommendation`, 'warn');
-    spinBall(false);
-    return;
-  }
+  // Tier N/A is shown in the message if tier could not be determined
 
   const recs = recommendBalls(info);
   const chatMsg = formatMessage(pokemon, info, recs);
