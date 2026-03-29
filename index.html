@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,216 +7,49 @@
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0a0f;
-    --bg2: #13131a;
-    --bg3: #1c1c26;
-    --border: #2a2a3a;
-    --accent: #7c3aed;
-    --accent2: #a855f7;
-    --green: #22c55e;
-    --amber: #f59e0b;
-    --red: #ef4444;
-    --blue: #3b82f6;
-    --text: #e2e8f0;
-    --muted: #64748b;
-    --pixel: 'Press Start 2P', monospace;
-    --mono: 'DM Mono', monospace;
+    --bg: #0a0a0f; --bg2: #13131a; --bg3: #1c1c26; --border: #2a2a3a;
+    --accent: #7c3aed; --accent2: #a855f7; --green: #22c55e; --amber: #f59e0b;
+    --red: #ef4444; --blue: #3b82f6; --text: #e2e8f0; --muted: #64748b;
+    --pixel: 'Press Start 2P', monospace; --mono: 'DM Mono', monospace;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--mono);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
+    background: var(--bg); color: var(--text); font-family: var(--mono);
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 24px;
   }
-
   .container { width: 100%; max-width: 560px; }
-
-  /* Header */
-  .header {
-    text-align: center;
-    margin-bottom: 32px;
-  }
-  .header h1 {
-    font-family: var(--pixel);
-    font-size: 13px;
-    color: var(--accent2);
-    letter-spacing: 1px;
-    line-height: 1.8;
-    text-shadow: 0 0 20px rgba(168,85,247,0.4);
-  }
-  .header p {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 10px;
-    letter-spacing: 0.5px;
-  }
-
-  /* Pokéball spinner icon */
-  .ball-icon {
-    width: 48px;
-    height: 48px;
-    margin: 0 auto 16px;
-    position: relative;
-  }
+  .header { text-align: center; margin-bottom: 32px; }
+  .header h1 { font-family: var(--pixel); font-size: 13px; color: var(--accent2); letter-spacing: 1px; line-height: 1.8; text-shadow: 0 0 20px rgba(168,85,247,0.4); }
+  .header p { font-size: 11px; color: var(--muted); margin-top: 10px; letter-spacing: 0.5px; }
+  .ball-icon { width: 48px; height: 48px; margin: 0 auto 16px; position: relative; }
   .ball-icon svg { width: 100%; height: 100%; }
   .ball-icon.spinning svg { animation: spin 1s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* Card */
-  .card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 16px;
-  }
-
-  .card-label {
-    font-family: var(--pixel);
-    font-size: 7px;
-    color: var(--muted);
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    margin-bottom: 10px;
-  }
-
-  /* Setup screen */
-  #setup-screen { display: block; }
-  #bot-screen   { display: none; }
-
-  .input-row {
-    display: flex;
-    gap: 10px;
-    align-items: stretch;
-  }
-
-  .input-wrap {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0 14px;
-    transition: border-color 0.2s;
-  }
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+  .card-label { font-family: var(--pixel); font-size: 7px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; }
+  #setup-screen { display: block; } #bot-screen { display: none; }
+  .input-row { display: flex; gap: 10px; align-items: stretch; }
+  .input-wrap { flex: 1; display: flex; align-items: center; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 0 14px; transition: border-color 0.2s; }
   .input-wrap:focus-within { border-color: var(--accent2); }
-  .input-wrap span {
-    color: var(--muted);
-    font-size: 13px;
-    user-select: none;
-    margin-right: 4px;
-  }
-  .input-wrap input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 14px;
-    padding: 13px 0;
-  }
+  .input-wrap span { color: var(--muted); font-size: 13px; user-select: none; margin-right: 4px; }
+  .input-wrap input { flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-family: var(--mono); font-size: 14px; padding: 13px 0; }
   .input-wrap input::placeholder { color: var(--muted); }
-
-  button {
-    background: var(--accent);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 13px 22px;
-    font-family: var(--pixel);
-    font-size: 7px;
-    letter-spacing: 1px;
-    cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
-    white-space: nowrap;
-  }
-  button:hover  { background: var(--accent2); }
-  button:active { transform: scale(0.97); }
-  button.danger { background: #7f1d1d; }
-  button.danger:hover { background: var(--red); }
-
-  .hint {
-    font-size: 10px;
-    color: var(--muted);
-    margin-top: 10px;
-    line-height: 1.7;
-  }
-
-  /* Status bar */
-  .status-bar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 16px;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    margin-bottom: 16px;
-  }
-  .dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--muted);
-    flex-shrink: 0;
-    transition: background 0.3s;
-  }
-  .dot.green  { background: var(--green); box-shadow: 0 0 6px var(--green); }
-  .dot.amber  { background: var(--amber); }
-  .dot.red    { background: var(--red); }
+  button { background: var(--accent); color: white; border: none; border-radius: 8px; padding: 13px 22px; font-family: var(--pixel); font-size: 7px; letter-spacing: 1px; cursor: pointer; transition: background 0.15s, transform 0.1s; white-space: nowrap; }
+  button:hover { background: var(--accent2); } button:active { transform: scale(0.97); }
+  button.danger { background: #7f1d1d; } button.danger:hover { background: var(--red); }
+  .hint { font-size: 10px; color: var(--muted); margin-top: 10px; line-height: 1.7; }
+  .status-bar { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 16px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex-shrink: 0; transition: background 0.3s; }
+  .dot.green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot.amber { background: var(--amber); } .dot.red { background: var(--red); }
   .status-text { font-size: 11px; color: var(--text); flex: 1; }
-  .channel-badge {
-    font-family: var(--pixel);
-    font-size: 7px;
-    color: var(--accent2);
-    background: rgba(168,85,247,0.12);
-    border: 1px solid rgba(168,85,247,0.25);
-    border-radius: 4px;
-    padding: 4px 8px;
-  }
-
-  /* Log */
-  .log-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-  .log-clear {
-    background: transparent;
-    color: var(--muted);
-    border: 1px solid var(--border);
-    padding: 4px 10px;
-    font-family: var(--mono);
-    font-size: 10px;
-    border-radius: 4px;
-  }
+  .channel-badge { font-family: var(--pixel); font-size: 7px; color: var(--accent2); background: rgba(168,85,247,0.12); border: 1px solid rgba(168,85,247,0.25); border-radius: 4px; padding: 4px 8px; }
+  .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .log-clear { background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 4px 10px; font-family: var(--mono); font-size: 10px; border-radius: 4px; }
   .log-clear:hover { background: var(--bg3); color: var(--text); }
-
-  #log {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 14px;
-    height: 240px;
-    overflow-y: auto;
-    font-size: 10px;
-    line-height: 1.9;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
-  }
-  #log::-webkit-scrollbar { width: 4px; }
-  #log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
+  #log { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; height: 240px; overflow-y: auto; font-size: 10px; line-height: 1.9; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  #log::-webkit-scrollbar { width: 4px; } #log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
   .log-line { display: flex; gap: 8px; }
   .log-time { color: var(--muted); flex-shrink: 0; }
   .log-line.info    .log-msg { color: #94a3b8; }
@@ -226,55 +58,17 @@
   .log-line.warn    .log-msg { color: var(--amber); }
   .log-line.error   .log-msg { color: var(--red); }
   .log-line.sent    .log-msg { color: var(--blue); }
-
-  /* Spawn notification */
-  #spawn-toast {
-    display: none;
-    background: var(--bg2);
-    border: 1px solid var(--accent);
-    border-radius: 10px;
-    padding: 14px 20px;
-    font-size: 11px;
-    width: 100%;
-    margin-top: 16px;
-    box-shadow: 0 0 20px rgba(124,58,237,0.15);
-  }
+  #spawn-toast { display: none; background: var(--bg2); border: 1px solid var(--accent); border-radius: 10px; padding: 14px 20px; font-size: 11px; width: 100%; margin-top: 16px; box-shadow: 0 0 20px rgba(124,58,237,0.15); }
   #spawn-toast.show { display: block; }
-  #spawn-toast .toast-title {
-    font-family: var(--pixel);
-    font-size: 7px;
-    color: var(--accent2);
-    margin-bottom: 6px;
-    letter-spacing: 1px;
-  }
+  #spawn-toast .toast-title { font-family: var(--pixel); font-size: 7px; color: var(--accent2); margin-bottom: 6px; letter-spacing: 1px; }
   #spawn-toast .toast-msg { color: var(--text); line-height: 1.6; word-break: break-word; }
-
-  /* Stop button row */
-  .bot-controls {
-    display: flex;
-    gap: 10px;
-    margin-top: 16px;
-  }
+  .bot-controls { display: flex; gap: 10px; margin-top: 16px; }
   .bot-controls button { flex: 1; }
-
-  /* Error callout */
-  .error-callout {
-    background: rgba(239,68,68,0.08);
-    border: 1px solid rgba(239,68,68,0.3);
-    border-radius: 8px;
-    padding: 12px 14px;
-    font-size: 10px;
-    color: #fca5a5;
-    line-height: 1.7;
-    margin-top: 12px;
-    display: none;
-  }
+  .error-callout { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 12px 14px; font-size: 10px; color: #fca5a5; line-height: 1.7; margin-top: 12px; display: none; }
 </style>
 </head>
 <body>
 <div class="container">
-
-  <!-- Header -->
   <div class="header">
     <div class="ball-icon" id="ball-icon">
       <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -289,7 +83,6 @@
     <p>Auto-recommends Pokéballs when a Pokémon spawns in chat</p>
   </div>
 
-  <!-- SETUP SCREEN -->
   <div id="setup-screen">
     <div class="card">
       <div class="card-label">Your Twitch Channel</div>
@@ -305,14 +98,12 @@
     </div>
   </div>
 
-  <!-- BOT RUNNING SCREEN -->
   <div id="bot-screen">
     <div class="status-bar">
       <div class="dot" id="status-dot"></div>
       <div class="status-text" id="status-text">Connecting…</div>
       <div class="channel-badge" id="channel-badge"></div>
     </div>
-
     <div class="card">
       <div class="log-header">
         <div class="card-label" style="margin:0">Activity Log</div>
@@ -320,17 +111,14 @@
       </div>
       <div id="log"></div>
     </div>
-
     <div id="spawn-toast">
       <div class="toast-title">LAST SPAWN</div>
       <div class="toast-msg" id="toast-msg"></div>
     </div>
-
     <div class="bot-controls">
       <button class="danger" onclick="stopBot()">STOP BOT</button>
       <button onclick="changeChannel()" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);">Change Channel</button>
     </div>
-
     <div class="card" style="margin-top:16px;">
       <div class="card-label">Manual Lookup — !rb</div>
       <div class="input-row">
@@ -342,7 +130,6 @@
       </div>
       <p class="hint" style="margin-top:8px;">Runs a full ball recommendation for any Pokémon locally, without sending anything to chat. You can also type <code>!rb Pikachu</code> in your Twitch chat to trigger it remotely.</p>
     </div>
-
     <div class="card" style="margin-top:16px;">
       <div class="card-label">Test — Send a Message to Chat</div>
       <div class="input-row">
@@ -354,19 +141,17 @@
       <p class="hint" style="margin-top:8px;">Use this to verify the bot can post messages. If nothing appears in chat, the token needs to be regenerated.</p>
     </div>
   </div>
-
 </div>
-
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-//  CONFIGURATION — Update BOT_NICK and BOT_TOKEN before deploying
+//  CONFIGURATION
 // ═══════════════════════════════════════════════════════════════
 const BOT_NICK  = 'RecommendedPokeball';
-const BOT_TOKEN = 'oauth:fbi0y1a0u14hzp4g11jmw30uik77ns'; // ← paste your regenerated token after resetting it
+const BOT_TOKEN = 'oauth:fbi0y1a0u14hzp4g11jmw30uik77ns';
 
 // ═══════════════════════════════════════════════════════════════
-//  BALL RECOMMENDATION LOGIC
+//  BALL RECOMMENDATION LOGIC (unchanged)
 // ═══════════════════════════════════════════════════════════════
 const HEAVY_KG   = 500;
 const FEATHER_KG = 16;
@@ -379,54 +164,40 @@ function recommendBalls(info) {
   const w = info.weight_kg, hp = info.base_hp, spd = info.base_speed;
 
   recs.push({ name: 'Ultra Ball', reason: '80%' });
-  
-  if (types.includes('water') || types.includes('bug')) {
-    const m = types.filter(t => ['water','bug'].includes(t)).map(capitalize).join(' & ');
+  if (types.includes('water') || types.includes('bug'))
     recs.push({ name: 'Net Ball', reason: '80%' });
-  }
   if (types.includes('ghost'))
     recs.push({ name: 'Phantom Ball', reason: '80%' });
   if (types.includes('dark'))
     recs.push({ name: 'Night Ball', reason: '80%' });
   if (types.includes('ice'))
     recs.push({ name: 'Frozen Ball', reason: '80%' });
-  if (types.includes('poison') || types.includes('psychic')) {
-    const m = types.filter(t => ['poison','psychic'].includes(t)).map(capitalize).join(' & ');
+  if (types.includes('poison') || types.includes('psychic'))
     recs.push({ name: 'Cipher Ball', reason: '80%' });
-  }
-  if (types.includes('electric') || types.includes('steel')) {
-    const m = types.filter(t => ['electric','steel'].includes(t)).map(capitalize).join(' & ');
+  if (types.includes('electric') || types.includes('steel'))
     recs.push({ name: 'Magnet Ball', reason: '80%' });
-  }
   if (types.includes('normal'))
     recs.push({ name: 'Basic Ball', reason: '80%' });
-  if (types.includes('fairy') || types.includes('dragon')) {
-    const m = types.filter(t => ['fairy','dragon'].includes(t)).map(capitalize).join(' & ');
+  if (types.includes('fairy') || types.includes('dragon'))
     recs.push({ name: 'Fantasy Ball', reason: '80%' });
-  }
   if (types.includes('ground') || types.includes('rock'))
     recs.push({ name: 'Geo Ball', reason: '80%' });
-  if (types.includes('fighting') || types.includes('flying')) {
-    const m = types.filter(t => ['fighting','flying'].includes(t)).map(capitalize).join(' & ');
+  if (types.includes('fighting') || types.includes('flying'))
     recs.push({ name: 'Mach Ball', reason: '80%' });
-  }
-  if (types.includes('fire') || types.includes('grass')) {
-    const m = types.filter(t => ['fire','grass'].includes(t)).map(capitalize).join(' & ');
+  if (types.includes('fire') || types.includes('grass'))
     recs.push({ name: 'Sun Ball', reason: '80%' });
-  }
   if (spd >= MIN_SPEED) recs.push({ name: 'Fast Ball',    reason: `80% — ${spd} base Speed` });
   if (hp  >= MIN_HP)    recs.push({ name: 'Heal Ball',    reason: `80% — ${hp} base HP` });
   if (w   >= HEAVY_KG)  recs.push({ name: 'Heavy Ball',   reason: '80%' });
   else if (w <= FEATHER_KG) recs.push({ name: 'Feather Ball', reason: '80%' });
   if (info.evolution_stages >= 3 && info.evolution_stage === 1)
     recs.push({ name: 'Nest Ball', reason: '90% — Stage 1 of 3' });
-
   return recs;
 }
 
 function formatMessage(pokemon, info, recs) {
   const tierMap = { 0: 'Tier C', 1: 'Tier B', 2: 'Tier A', 3: 'Tier S' };
-  const tier    = info.tier !== undefined ? tierMap[info.tier] ?? 'Tier N/A' : 'Tier N/A';
+  const tier    = info.tier !== undefined && info.tier !== null ? tierMap[info.tier] ?? 'Tier N/A' : 'Tier N/A';
   const types   = info.types.map(capitalize).join('/');
   const prefix  = [tier, types].filter(Boolean).join(' | ');
   const balls   = recs.map(r => `${r.name} (${r.reason})`).join(' | ');
@@ -436,43 +207,57 @@ function formatMessage(pokemon, info, recs) {
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
 // ═══════════════════════════════════════════════════════════════
-//  NERDOTRON PCG API — single call returns tier, types, weight, BST
-//  Falls back to PokeAPI for evolution stages if needed
+//  NAME NORMALISATION (unchanged)
+// ═══════════════════════════════════════════════════════════════
+function toPokeSlug(raw) {
+  return raw
+    .toLowerCase()
+    .replace(/\u00e9/g, 'e')
+    .replace(/['\u2018\u2019\u201a\u201b\u2032\u2035]/g, "'")
+    .replace(/[\u2640\u2642\u266a]/g, '')
+    .replace(/\s*\([^)]+\)/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9\-']/g, '');
+}
+
+function buildSlugVariants(baseSlug, formHint) {
+  const variants = [];
+  const formSlug = formHint
+    ? baseSlug + '-' + formHint.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+    : null;
+  if (formSlug) variants.push(formSlug);
+  variants.push(baseSlug);
+  const spaceVar = baseSlug.replace(/-/g, ' ');
+  if (spaceVar !== baseSlug) variants.push(spaceVar);
+  const noSep = baseSlug.replace(/[-']/g, '');
+  if (noSep !== baseSlug && !variants.includes(noSep)) variants.push(noSep);
+  const root = baseSlug.split('-')[0];
+  if (root !== baseSlug && !variants.includes(root)) variants.push(root);
+  return variants;
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  POKEMON INFO LOOKUP
+//  Tier resolution order (from poke-checker, which works correctly):
+//    1. Deemon cache (already seen this Pokémon this session)
+//    2. Wait up to 10s for Deemon's live stat message to arrive
+//    3. Nerdotron API fallback (8 slug variants, NaN-safe)
 // ═══════════════════════════════════════════════════════════════
 const pokeCache = {};
 
-// Polls the pokeCache for a tier, checking all provided keys every 500ms for up to maxMs
-// Now accepts an array of keys so all slug variants are checked simultaneously
-function pollChatCacheForTier(keys, maxMs) {
-  const keyArr = Array.isArray(keys) ? keys : [keys];
-  return new Promise(resolve => {
-    const start = Date.now();
-    const check = () => {
-      for (const k of keyArr) {
-        const t = pokeCache[k]?.tier;
-        if (t !== undefined) return resolve(t);
-      }
-      if (Date.now() - start >= maxMs) return resolve(undefined);
-      setTimeout(check, 500);
-    };
-    check();
-  });
-}
-
-
 async function getPokemonInfo(name) {
-  // Parse the raw name into normalised keys, same as Bouncing-Pokemon script
-  const formMatch = name.match(/\(([^)]+)\)/);
-  const formHint  = formMatch ? formMatch[1].trim() : null;
-  const baseSlug  = toPokeSlug(name);   // handles accents, apostrophes, spaces, parentheticals
-  const cacheKey  = baseSlug;
-  if (pokeCache[cacheKey] && pokeCache[cacheKey].types) return pokeCache[cacheKey];
+  const formMatch  = name.match(/\(([^)]+)\)/);
+  const formHint   = formMatch ? formMatch[1].trim() : null;
+  const baseSlug   = toPokeSlug(name);
+  const slugs      = buildSlugVariants(baseSlug, formHint);
 
-  // All slug variants to try against Nerdotron and PokeAPI in order
-  const slugs = buildSlugVariants(baseSlug, formHint);
+  // Return cached full info if we already have types (complete record)
+  if (pokeCache[baseSlug] && pokeCache[baseSlug].types) return pokeCache[baseSlug];
+
   log(`[Lookup] Slug variants: ${slugs.join(', ')}`, 'info');
 
-  // Helper: try Nerdotron with a specific key
+  // ── Helper: Nerdotron fetch ───────────────────────────────────
   async function fetchNerdotron(lookupKey) {
     try {
       const r = await fetch(`https://api.nerdotron.app/pcg/${encodeURIComponent(lookupKey)}`);
@@ -482,15 +267,14 @@ async function getPokemonInfo(name) {
       const types = (d.types || '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
       if (!types.length) return null;
       const weight_kg = parseFloat(d.weight) || 0;
-      // Nerdotron sometimes returns tierInt as "" (empty string) — treat that as missing
+      // NaN-safe tier parse — same fix as poke-checker
       const tierRaw = parseInt(d.tierInt);
       const tier = (d.tierInt !== undefined && d.tierInt !== '' && !isNaN(tierRaw)) ? tierRaw : undefined;
-      const bst  = parseInt(d.bst) || 0;
-      return { types, weight_kg, tier, bst };
+      return { types, weight_kg, tier, bst: parseInt(d.bst) || 0 };
     } catch(e) { return null; }
   }
 
-  // Helper: try PokeAPI directly with a specific key
+  // ── Helper: PokeAPI direct fetch ──────────────────────────────
   async function fetchPokeAPI(lookupKey) {
     try {
       const r = await fetch(`https://pokeapi.co/api/v2/pokemon/${encodeURIComponent(lookupKey)}/`);
@@ -499,7 +283,7 @@ async function getPokemonInfo(name) {
     } catch(e) { return null; }
   }
 
-  // Helper: try PokeAPI species varieties (e.g. maushold → family-of-four)
+  // ── Helper: PokeAPI species varieties ────────────────────────
   async function fetchSpeciesVarieties(lookupKey) {
     try {
       const r = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${encodeURIComponent(lookupKey)}/`);
@@ -507,8 +291,7 @@ async function getPokemonInfo(name) {
       const s = await r.json();
       for (const v of (s.varieties || [])) {
         const parts = v.pokemon.url.replace(/\/+$/, '').split('/');
-        const vKey = parts[parts.length - 1];
-        const d = await fetchPokeAPI(vKey);
+        const d = await fetchPokeAPI(parts[parts.length - 1]);
         if (d) return d;
       }
       return null;
@@ -516,27 +299,24 @@ async function getPokemonInfo(name) {
   }
 
   try {
-    // ── Step 1: Nerdotron — try all slug variants ──────────────────────────────
+    // ── Step 1: Nerdotron — types/weight/BST (try all slug variants) ──
     let nerd = null;
-    let usedNerdSlug = null;
     for (const slug of slugs) {
       nerd = await fetchNerdotron(slug);
-      if (nerd) { usedNerdSlug = slug; break; }
+      if (nerd) { log(`[Nerdotron] Hit on "${slug}"`, 'info'); break; }
       log(`[Nerdotron] No result for "${slug}"`, 'info');
     }
 
-    // ── Step 2: PokeAPI — get HP/Speed/evo (also serves as name validation) ───
+    // ── Step 2: PokeAPI — HP/Speed/evo chain ──────────────────────
     let pokeData = null;
-    let usedPokeSlug = null;
     for (const slug of slugs) {
       pokeData = await fetchPokeAPI(slug);
-      if (pokeData) { usedPokeSlug = slug; break; }
+      if (pokeData) break;
     }
-    // If direct slugs all failed, try species varieties
     if (!pokeData) {
       for (const slug of [baseSlug, baseSlug.split('-')[0]]) {
         pokeData = await fetchSpeciesVarieties(slug);
-        if (pokeData) { usedPokeSlug = 'species-variety'; break; }
+        if (pokeData) break;
       }
     }
 
@@ -545,7 +325,7 @@ async function getPokemonInfo(name) {
       return null;
     }
 
-    // ── Step 3: Build extra stats from PokeAPI data ────────────────────────────
+    // ── Step 3: Build HP/Speed/evo from PokeAPI ───────────────────
     let extra = { base_hp: 0, base_speed: 0, evolution_stages: 1, evolution_stage: 1 };
     if (pokeData) {
       const stats = {};
@@ -553,46 +333,72 @@ async function getPokemonInfo(name) {
       extra.base_hp    = stats['hp']    || 0;
       extra.base_speed = stats['speed'] || 0;
       if (pokeData.species?.url) {
-        const evo = await getEvolutionInfo(pokeData.species.url, pokeData.species.name || baseSlug);
+        const evo = await getEvolutionInfo(pokeData.species.url);
         extra.evolution_stages = evo.total;
         extra.evolution_stage  = evo.current;
       }
-      // If Nerdotron failed but PokeAPI succeeded, build minimal nerd-like data from PokeAPI
       if (!nerd) {
-        log(`Nerdotron failed, using PokeAPI types/weight for "${name}"`, 'warn');
-        nerd = {
-          types: pokeData.types.map(t => t.type.name),
-          weight_kg: pokeData.weight / 10,
-          tier: undefined,
-          bst: 0,
-        };
+        log(`Nerdotron failed — using PokeAPI types/weight for "${name}"`, 'warn');
+        nerd = { types: pokeData.types.map(t => t.type.name), weight_kg: pokeData.weight / 10, tier: undefined, bst: 0 };
       }
     }
 
-    // ── Step 4: Resolve tier ──────────────────────────────────────────────────
-    // Check cache under all slug variants (Deemon may have cached under a different slug)
-    let resolvedTier = nerd.tier;
+    // ── Step 4: Tier resolution — poke-checker pattern ───────────
+    //  4a. Check Deemon cache first (already seen this spawn before)
+    let resolvedTier = undefined;
+    for (const slug of slugs) {
+      if (pokeCache[slug] !== undefined && pokeCache[slug] !== null && pokeCache[slug].tier !== undefined) {
+        resolvedTier = pokeCache[slug].tier;
+        log(`[Tier] From Deemon cache (key: ${slug}): Tier ${['C','B','A','S'][resolvedTier]}`, 'info');
+        break;
+      }
+    }
+
+    //  4b. If not cached, wait up to 10s for Deemon's live stat message
     if (resolvedTier === undefined) {
-      for (const slug of slugs) {
-        if (pokeCache[slug]?.tier !== undefined) {
-          resolvedTier = pokeCache[slug].tier;
-          log(`Using chat-cached tier for "${name}" (key: ${slug}): ${['C','B','A','S'][resolvedTier]}`, 'info');
-          break;
+      log(`[Tier] No cache for "${name}" — waiting up to 10s for Deemon chat…`, 'warn');
+      const deemonTier = await waitForDeemonTier(name, 10000);
+      if (deemonTier !== null && deemonTier !== undefined) {
+        resolvedTier = deemonTier;
+        log(`[Tier] Confirmed from Deemon chat: Tier ${['C','B','A','S'][resolvedTier]}`, 'success');
+      }
+    }
+
+    //  4c. Nerdotron API as final fallback if Deemon didn't provide it
+    if (resolvedTier === undefined) {
+      log(`[Tier] Deemon timed out — falling back to Nerdotron API…`, 'warn');
+      // Use tier from the Nerdotron call we already made (NaN-safe)
+      if (nerd && nerd.tier !== undefined) {
+        resolvedTier = nerd.tier;
+        log(`[Tier] From Nerdotron: Tier ${['C','B','A','S'][resolvedTier]} (may be inaccurate)`, 'warn');
+      } else {
+        // Try all slug variants explicitly for tier
+        async function fetchTierOnly(lookupKey) {
+          try {
+            const r = await fetch(`https://api.nerdotron.app/pcg/${encodeURIComponent(lookupKey)}`);
+            if (!r.ok) return null;
+            const d = await r.json();
+            if (!d || Object.keys(d).length === 0) return null;
+            if (d.tierInt === undefined || d.tierInt === null || d.tierInt === '') return null;
+            const parsed = parseInt(d.tierInt);
+            return isNaN(parsed) ? null : parsed;
+          } catch(e) { return null; }
+        }
+        for (const slug of slugs) {
+          const t = await fetchTierOnly(slug);
+          if (t !== null) {
+            resolvedTier = t;
+            log(`[Tier] Nerdotron fallback hit on "${slug}": Tier ${['C','B','A','S'][t]} (may be inaccurate)`, 'warn');
+            break;
+          }
+        }
+        if (resolvedTier === undefined) {
+          log(`[Tier] Could not determine tier for "${name}"`, 'warn');
         }
       }
     }
 
-    // If still unknown, poll for up to 10s for Deemon's PCG stat message to arrive
-    if (resolvedTier === undefined) {
-      log(`Tier unknown for "${name}" — waiting up to 10s for Deemon chat…`, 'warn');
-      resolvedTier = await pollChatCacheForTier(slugs, 10000);
-      if (resolvedTier !== undefined) {
-        log(`Got tier from Deemon chat for "${name}": ${['C','B','A','S'][resolvedTier]}`, 'info');
-      } else {
-        log(`Tier not confirmed for "${name}" after 10s`, 'warn');
-      }
-    }
-
+    // ── Step 5: Assemble and cache result ─────────────────────────
     const info = {
       types:            nerd.types,
       weight_kg:        nerd.weight_kg,
@@ -603,7 +409,6 @@ async function getPokemonInfo(name) {
       evolution_stages: extra.evolution_stages,
       evolution_stage:  extra.evolution_stage,
     };
-    // Cache under all slug variants so future lookups are instant
     for (const slug of slugs) { pokeCache[slug] = info; }
     return info;
 
@@ -613,44 +418,11 @@ async function getPokemonInfo(name) {
   }
 }
 
-
-async function getPokeAPIStats(key) {
+async function getEvolutionInfo(speciesUrl) {
   try {
-    const r = await fetch(`https://pokeapi.co/api/v2/pokemon/${key}/`);
-    if (!r.ok) return { base_hp: 0, base_speed: 0, evolution_stages: 1, evolution_stage: 1 };
-    const d = await r.json();
-    const stats = {};
-    d.stats.forEach(s => { stats[s.stat.name] = s.base_stat; });
-    const evo = await getEvolutionInfo(d.species.url, key);
-    return { base_hp: stats['hp']||0, base_speed: stats['speed']||0, evolution_stages: evo.total, evolution_stage: evo.current };
-  } catch(e) { return { base_hp: 0, base_speed: 0, evolution_stages: 1, evolution_stage: 1 }; }
-}
-
-async function getPokeAPIFallback(key) {
-  try {
-    const r = await fetch(`https://pokeapi.co/api/v2/pokemon/${key}/`);
-    if (!r.ok) return null;
-    const d = await r.json();
-    const types = d.types.map(t => t.type.name);
-    const stats = {};
-    d.stats.forEach(s => { stats[s.stat.name] = s.base_stat; });
-    const weight_kg = d.weight / 10;
-    const evo = await getEvolutionInfo(d.species.url, key);
-    const info = { types, weight_kg, tier: undefined, bst: 0,
-                   base_hp: stats['hp']||0, base_speed: stats['speed']||0,
-                   evolution_stages: evo.total, evolution_stage: evo.current };
-    pokeCache[key] = info;
-    return info;
-  } catch(e) { return null; }
-}
-
-async function getEvolutionInfo(speciesUrl, pokemonKey) {
-  try {
-    const s = await fetch(speciesUrl).then(r=>r.json());
-    const c = await fetch(s.evolution_chain.url).then(r=>r.json());
-    const total = countStages(c.chain);
-    const current = findStage(c.chain, s.name, 1);
-    return { total, current: current ?? 1 };
+    const s = await fetch(speciesUrl).then(r => r.json());
+    const c = await fetch(s.evolution_chain.url).then(r => r.json());
+    return { total: countStages(c.chain), current: findStage(c.chain, s.name, 1) ?? 1 };
   } catch(e) { return { total: 1, current: 1 }; }
 }
 
@@ -669,58 +441,28 @@ function countStages(node) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  TWITCH IRC OVER WEBSOCKET
+//  DEEMON WATCHER — promise-based tier detection (from poke-checker)
+//  Watches #deemonrider for PCG stat messages:
+//  "Pokémon: Tinkatink - Tier: C - Type: Fairy/Steel - ..."
+//  Always overwrites cache since Deemon is the most accurate source.
 // ═══════════════════════════════════════════════════════════════
-const SPAWN_BOT = 'pokemoncommunitygame';
-// Captures full name including optional parenthetical form
-const SPAWN_RE  = /A wild ([\w .'\u2018\u2019\u201a\u201b\u2032\u2035:\u266a\u2640\u2642-]+?(?:\s*\([^)]+\))?)\s*appears\b/iu;
-
-// Matches PCG stat message: "Pokémon: Nosepass - Tier: C - Type: Rock - ..."
-const STAT_RE = /Pok[eé]mon:\s*([\w .'\u2018\u2019\u201a\u201b\u2032\u2035:\u266a\u2640\u2642-]+?(?:\s*\([^)]+\))?)\s*-\s*Tier:\s*([SABC?])/iu;
+const SPAWN_BOT      = 'pokemoncommunitygame';
+const SPAWN_RE       = /A wild ([\w .'\u2018\u2019\u201a\u201b\u2032\u2035:\u266a\u2640\u2642-]+?(?:\s*\([^)]+\))?)\s*appears\b/iu;
+const STAT_RE        = /Pok[eé]mon:\s*([\w .'''\u2018\u2019\u266a\u2640\u2642-]+?(?:\s*\([^)]+\))?)\s*-\s*Tier:\s*([SABC?])/iu;
 const TIER_LETTER_MAP = { S: 3, A: 2, B: 1, C: 0 };
+const DEEMON_CHANNEL  = 'deemonrider';
 
-// ─── Shared name normalisation ────────────────────────────────────────────────
-// Converts any raw pokemon name into a consistent hyphen-slug for API lookups.
-function toPokeSlug(raw) {
-  return raw
-    .toLowerCase()
-    .replace(/\u00e9/g, 'e')
-    .replace(/['\u2018\u2019\u201a\u201b\u2032\u2035]/g, "'")
-    .replace(/[\u2640\u2642\u266a]/g, '')
-    .replace(/\s*\([^)]+\)/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9\-']/g, '');
-}
+let wsDee = null, deemonReconnectTimer = null, deemonPingTimer = null;
 
-// Build all slug variants to try in priority order
-function buildSlugVariants(baseSlug, formHint) {
-  const variants = [];
-  const formSlug = formHint
-    ? baseSlug + '-' + formHint.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-    : null;
-  if (formSlug) variants.push(formSlug);
-  variants.push(baseSlug);
-  const spaceVar = baseSlug.replace(/-/g, ' ');
-  if (spaceVar !== baseSlug) variants.push(spaceVar);
-  const noSep = baseSlug.replace(/[-']/g, '');
-  if (noSep !== baseSlug && !variants.includes(noSep)) variants.push(noSep);
-  const root = baseSlug.split('-')[0];
-  if (root !== baseSlug && !variants.includes(root)) variants.push(root);
-  return variants;
-}
-
-// Secondary WebSocket — always watches #deemonrider for PCG stat messages
-const DEEMON_CHANNEL = 'deemonrider';
-let wsDee = null;
-let deemonReconnectTimer = null;
-let deemonPingTimer = null;
+// Per-spawn promise state — only one pending at a time
+let pendingTierResolve  = null;
+let pendingTierPokemon  = null;
 
 function connectDeemon() {
   if (wsDee) { wsDee.onclose = null; wsDee.close(); }
   if (deemonReconnectTimer) { clearTimeout(deemonReconnectTimer); deemonReconnectTimer = null; }
   if (deemonPingTimer) { clearInterval(deemonPingTimer); deemonPingTimer = null; }
-  log(`[Deemon] Connecting to #${DEEMON_CHANNEL} for tier data…`, 'info');
+  log(`[Deemon] Connecting to #${DEEMON_CHANNEL}…`, 'info');
   wsDee = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
   wsDee.onopen = () => {
     wsDee.send('PASS SCHMOOPIIE');
@@ -729,11 +471,11 @@ function connectDeemon() {
     deemonPingTimer = setInterval(() => wsDee && wsDee.readyState === 1 && wsDee.send('PING :tmi.twitch.tv'), 4*60*1000);
   };
   wsDee.onmessage = (e) => { e.data.split('\r\n').forEach(handleDeemonLine); };
-  wsDee.onerror = () => log('[Deemon] WebSocket error', 'warn');
-  wsDee.onclose = () => {
+  wsDee.onerror   = () => log('[Deemon] WebSocket error', 'warn');
+  wsDee.onclose   = () => {
     if (deemonPingTimer) { clearInterval(deemonPingTimer); deemonPingTimer = null; }
     if (stopping) return;
-    log(`[Deemon] Disconnected — reconnecting in 30s…`, 'warn');
+    log('[Deemon] Disconnected — reconnecting in 30s…', 'warn');
     deemonReconnectTimer = setTimeout(connectDeemon, 30000);
   };
 }
@@ -742,63 +484,81 @@ function handleDeemonLine(line) {
   if (!line) return;
   if (line.startsWith('PING')) { wsDee.send('PONG :tmi.twitch.tv'); return; }
   const m = line.match(/:([^!]+)![^ ]+ PRIVMSG #[^ ]+ :(.+)/);
-  if (!m) return;
-  const nick = m[1].toLowerCase();
-  if (nick !== SPAWN_BOT) return;
+  if (!m || m[1].toLowerCase() !== SPAWN_BOT) return;
   let msg = m[2].trim();
   if (msg.startsWith('\x01ACTION ')) msg = msg.slice(8).replace(/\x01$/, '').trim();
   else if (msg.startsWith('\u0001ACTION ')) msg = msg.slice(8).replace(/\u0001$/, '').trim();
-  const sm = msg.match(STAT_RE);
-  if (!sm) return;
-  const rawName = sm[1].trim();
-  const tierLetter = sm[2].toUpperCase();
-  const tierInt = TIER_LETTER_MAP[tierLetter];
+
+  const statMatch = msg.match(STAT_RE);
+  if (!statMatch) return;
+
+  const statName   = statMatch[1].trim();
+  const tierLetter = statMatch[2].toUpperCase();
+  const tierInt    = TIER_LETTER_MAP[tierLetter];
   if (tierInt === undefined) return;
 
-  // Use toPokeSlug for consistent key generation — same as getPokemonInfo
-  const formMatch = rawName.match(/\(([^)]+)\)/);
+  // Build all slug variants for the stat name and cache under all of them
+  const formMatch = statName.match(/\(([^)]+)\)/);
   const formHint  = formMatch ? formMatch[1].trim() : null;
-  const baseSlug  = toPokeSlug(rawName);
-  const slugs     = buildSlugVariants(baseSlug, formHint);
+  const statSlug  = toPokeSlug(statName);
+  const statSlugs = buildSlugVariants(statSlug, formHint);
 
-  // Cache tier under all variant keys so any lookup path can find it
-  for (const k of slugs) {
-    if (!pokeCache[k] || pokeCache[k].tier === undefined || pokeCache[k].tier === null) {
-      if (!pokeCache[k]) pokeCache[k] = {};
-      pokeCache[k].tier = tierInt;
+  for (const k of statSlugs) {
+    const prev = pokeCache[k]?.tier;
+    if (!pokeCache[k]) pokeCache[k] = {};
+    pokeCache[k].tier = tierInt;
+    if (prev !== undefined && prev !== null && prev !== tierInt) {
+      log(`[Deemon] Tier CORRECTED for ${statName}: Tier ${['C','B','A','S'][prev] ?? '?'} → Tier ${tierLetter}`, 'warn');
     }
   }
-  log(`[Deemon] Tier cached: ${rawName} = Tier ${tierLetter} (keys: ${slugs.join(', ')})`, 'info');
+  log(`[Deemon] Tier cached: ${statName} = Tier ${tierLetter} (keys: ${statSlugs.join(', ')})`, 'info');
+
+  // Resolve the pending promise if this matches what we're waiting for
+  if (pendingTierResolve) {
+    const pendingSlug = pendingTierPokemon ? toPokeSlug(pendingTierPokemon) : null;
+    if (pendingSlug && (statSlugs.includes(pendingSlug) || statSlug.startsWith(pendingSlug) || pendingSlug.startsWith(statSlug))) {
+      log(`[Deemon] Tier confirmed for ${pendingTierPokemon}: Tier ${tierLetter}`, 'success');
+      const resolve = pendingTierResolve;
+      pendingTierResolve = null;
+      pendingTierPokemon = null;
+      resolve(tierInt);
+    }
+  }
 }
 
-let ws = null;
-let channel = '';
-let stopping = false;
-let reconnectTimer = null;
-let pingTimer = null;
-let spawnTimerBall = null;
+// Waits up to maxMs for Deemon's stat message to arrive for this Pokémon.
+// Returns the tier integer (0-3) or null if timed out.
+function waitForDeemonTier(pokemon, maxMs) {
+  return new Promise(resolve => {
+    if (pendingTierResolve) pendingTierResolve(null); // cancel any previous pending wait
+    pendingTierPokemon = pokemon;
+    const timeout = setTimeout(() => {
+      if (pendingTierResolve) { pendingTierResolve = null; pendingTierPokemon = null; }
+      resolve(null);
+    }, maxMs);
+    pendingTierResolve = (tier) => { clearTimeout(timeout); resolve(tier); };
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  TWITCH IRC — main channel connection
+// ═══════════════════════════════════════════════════════════════
+let ws = null, channel = '', stopping = false, reconnectTimer = null, pingTimer = null, spawnTimerBall = null;
 
 function connect() {
   if (ws) { ws.onclose = null; ws.close(); }
   clearTimers();
   setStatus('Connecting…', 'amber');
   log('Connecting to Twitch…', 'info');
-
   ws = new WebSocket('wss://irc-ws.chat.twitch.tv:443');
-
   ws.onopen = () => {
     ws.send(`PASS ${BOT_TOKEN}`);
     ws.send(`NICK ${BOT_NICK}`);
     ws.send(`JOIN #${channel}`);
-    pingTimer = setInterval(() => ws && ws.readyState===1 && ws.send('PING :tmi.twitch.tv'), 4*60*1000);
+    pingTimer = setInterval(() => ws && ws.readyState === 1 && ws.send('PING :tmi.twitch.tv'), 4*60*1000);
   };
-
-  ws.onmessage = (e) => {
-    e.data.split('\r\n').forEach(handleLine);
-  };
-
+  ws.onmessage = (e) => { e.data.split('\r\n').forEach(handleLine); };
   ws.onerror = () => log('WebSocket error', 'error');
-
   ws.onclose = () => {
     clearTimers();
     if (stopping) return;
@@ -820,49 +580,35 @@ function handleLine(line) {
   const m = line.match(/:([^!]+)![^ ]+ PRIVMSG #[^ ]+ :(.+)/);
   if (!m) return;
   const nick = m[1].toLowerCase();
-  // Strip IRC /me action wrapper: \x01ACTION ...\x01
   let msg = m[2].trim();
   if (msg.startsWith('\x01ACTION ')) msg = msg.slice(8).replace(/\x01$/, '').trim();
   else if (msg.startsWith('\u0001ACTION ')) msg = msg.slice(8).replace(/\u0001$/, '').trim();
 
-  // DEBUG: log every single chat message so we can see exactly what's arriving
   log(`[MSG] ${nick}: ${msg}`, 'info');
 
-  // !rb command — anyone can trigger a manual lookup: !rb Pikachu
   const rbMatch = msg.match(/^!rb\s+(.+)/i);
   if (rbMatch) {
-    const pokemon = rbMatch[1].trim();
-    log(`Manual lookup triggered by ${nick}: ${pokemon}`, 'spawn');
-    handleSpawn(pokemon);
+    log(`Manual lookup triggered by ${nick}: ${rbMatch[1].trim()}`, 'spawn');
+    handleSpawn(rbMatch[1].trim());
     return;
   }
 
-  if (nick !== SPAWN_BOT) {
-    return;
-  }
-
-  // PCG message received — log it prominently
+  if (nick !== SPAWN_BOT) return;
   log(`[PCG DETECTED] "${msg}"`, 'warn');
 
   const sm = msg.match(SPAWN_RE);
   if (!sm) {
-    // Log raw character codes so we can see invisible/special chars
     const codes = [...msg].slice(0,60).map(c => c.codePointAt(0).toString(16)).join(' ');
     log(`[NO MATCH] Raw hex: ${codes}`, 'error');
     return;
   }
-  const pokemon = sm[1].trim();
-  log(`Spawn detected: ${pokemon}`, 'spawn');
-  handleSpawn(pokemon);
+  log(`Spawn detected: ${sm[1].trim()}`, 'spawn');
+  handleSpawn(sm[1].trim());
 }
 
 async function handleSpawn(pokemon) {
   spinBall(true);
-
-  // Cancel any previous spawn's Timer Ball countdown
   if (spawnTimerBall) { clearTimeout(spawnTimerBall); spawnTimerBall = null; }
-
-  // Schedule Timer Ball reminder at 80s (10s left in the 90s window)
   spawnTimerBall = setTimeout(() => {
     const timerMsg = `Timer Ball NOW! 10 seconds left to catch ${pokemon}!`;
     sendChat(timerMsg);
@@ -872,16 +618,12 @@ async function handleSpawn(pokemon) {
 
   log(`Looking up ${pokemon}…`, 'info');
   const info = await getPokemonInfo(pokemon);
-
-  // Do not send if tier could not be confirmed
   if (!info) {
     log(`No data for ${pokemon} — not sending`, 'warn');
     spinBall(false);
     return;
   }
-  // Tier N/A is shown in the message if tier could not be determined
-
-  const recs = recommendBalls(info);
+  const recs    = recommendBalls(info);
   const chatMsg = formatMessage(pokemon, info, recs);
   sendChat(chatMsg);
   showToast(chatMsg);
@@ -890,15 +632,13 @@ async function handleSpawn(pokemon) {
 }
 
 function sendChat(msg) {
-  if (ws && ws.readyState === 1) {
-    ws.send(`PRIVMSG #${channel} :${msg}`);
-  }
+  if (ws && ws.readyState === 1) ws.send(`PRIVMSG #${channel} :${msg}`);
 }
 
 function clearTimers() {
-  if (pingTimer)     { clearInterval(pingTimer);   pingTimer = null; }
-  if (reconnectTimer){ clearTimeout(reconnectTimer); reconnectTimer = null; }
-  if (spawnTimerBall){ clearTimeout(spawnTimerBall);  spawnTimerBall = null; }
+  if (pingTimer)      { clearInterval(pingTimer);    pingTimer = null; }
+  if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+  if (spawnTimerBall) { clearTimeout(spawnTimerBall); spawnTimerBall = null; }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -906,49 +646,27 @@ function clearTimers() {
 // ═══════════════════════════════════════════════════════════════
 function setStatus(text, color) {
   document.getElementById('status-text').textContent = text;
-  const dot = document.getElementById('status-dot');
-  dot.className = 'dot ' + (color || '');
+  document.getElementById('status-dot').className = 'dot ' + (color || '');
 }
-
-function spinBall(on) {
-  document.getElementById('ball-icon').classList.toggle('spinning', on);
-}
-
+function spinBall(on) { document.getElementById('ball-icon').classList.toggle('spinning', on); }
 function showToast(msg) {
   document.getElementById('toast-msg').textContent = msg;
   document.getElementById('spawn-toast').classList.add('show');
 }
-
 function log(msg, level='info') {
   const el = document.getElementById('log');
-  const now = new Date();
-  const ts  = now.toTimeString().slice(0,8);
+  const ts = new Date().toTimeString().slice(0,8);
   const line = document.createElement('div');
   line.className = `log-line ${level}`;
   line.innerHTML = `<span class="log-time">${ts}</span><span class="log-msg">${escHtml(msg)}</span>`;
   el.appendChild(line);
-  // Trim old lines
   while (el.children.length > 200) el.removeChild(el.firstChild);
   el.scrollTop = el.scrollHeight;
 }
-
-function clearLog() {
-  document.getElementById('log').innerHTML = '';
-}
-
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-function showError(msg) {
-  const el = document.getElementById('error-callout');
-  el.textContent = msg;
-  el.style.display = 'block';
-}
-
-function hideError() {
-  document.getElementById('error-callout').style.display = 'none';
-}
+function clearLog() { document.getElementById('log').innerHTML = ''; }
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function showError(msg) { const el = document.getElementById('error-callout'); el.textContent = msg; el.style.display = 'block'; }
+function hideError() { document.getElementById('error-callout').style.display = 'none'; }
 
 // ═══════════════════════════════════════════════════════════════
 //  FLOW CONTROL
@@ -959,11 +677,9 @@ function startBot() {
   hideError();
   channel = input;
   localStorage.setItem('pokebot_channel', channel);
-
   document.getElementById('setup-screen').style.display = 'none';
   document.getElementById('bot-screen').style.display   = 'block';
   document.getElementById('channel-badge').textContent  = '#' + channel;
-
   stopping = false;
   spinBall(true);
   connect();
@@ -977,6 +693,7 @@ function stopBot() {
   if (wsDee) { wsDee.onclose = null; wsDee.close(); wsDee = null; }
   if (deemonReconnectTimer) { clearTimeout(deemonReconnectTimer);  deemonReconnectTimer = null; }
   if (deemonPingTimer)      { clearInterval(deemonPingTimer);       deemonPingTimer      = null; }
+  if (pendingTierResolve)   { pendingTierResolve(null); pendingTierResolve = null; }
   setStatus('Stopped.', '');
   log('Bot stopped.', 'warn');
   spinBall(false);
@@ -1001,40 +718,24 @@ function sendTestMessage() {
   const input = document.getElementById('test-msg-input');
   const msg = input.value.trim();
   if (!msg) return;
-  if (!ws || ws.readyState !== 1) {
-    log('Cannot send — bot is not connected.', 'error');
-    return;
-  }
+  if (!ws || ws.readyState !== 1) { log('Cannot send — bot is not connected.', 'error'); return; }
   sendChat(msg);
   log(`Test message sent: "${msg}"`, 'sent');
   input.value = '';
 }
 
 // ═══════════════════════════════════════════════════════════════
-//  INIT — restore saved channel
+//  INIT
 // ═══════════════════════════════════════════════════════════════
 window.addEventListener('load', () => {
   let saved = null;
   try { saved = localStorage.getItem('pokebot_channel'); } catch(e) {}
-  if (saved) {
-    // Channel already known — skip setup screen and connect immediately
-    document.getElementById('channel-input').value = saved;
-    startBot();
-  }
-  // Allow Enter key to start
-  document.getElementById('channel-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') startBot();
-  });
-  // Enter key on test message input
+  if (saved) { document.getElementById('channel-input').value = saved; startBot(); }
+  document.getElementById('channel-input').addEventListener('keydown', e => { if (e.key === 'Enter') startBot(); });
   const testInput = document.getElementById('test-msg-input');
-  if (testInput) testInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') sendTestMessage();
-  });
-  // Enter key on rb input
+  if (testInput) testInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendTestMessage(); });
   const rbInput = document.getElementById('rb-input');
-  if (rbInput) rbInput.addEventListener('keydown', e => {
-    if (e.key === 'Enter') triggerRbLocal();
-  });
+  if (rbInput) rbInput.addEventListener('keydown', e => { if (e.key === 'Enter') triggerRbLocal(); });
 });
 </script>
 </body>
